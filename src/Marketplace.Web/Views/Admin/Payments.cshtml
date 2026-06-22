@@ -1,0 +1,63 @@
+@model Marketplace.Web.Models.Admin.AdminPaymentsViewModel
+@{
+    ViewData["Title"] = "สลิปรอตรวจสอบ";
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / ผู้ดูแล / การชำระเงิน</div>
+    <p class="eyebrow">◈ ADMIN · PAYMENTS</p>
+    <h1>สลิปค่าสมาชิกที่รอตรวจสอบ</h1>
+    <p class="muted stack-md">ค่าสมาชิกเป็นรายได้ของแพลตฟอร์ม แยกจาก flow การซื้อขาย — การยืนยันสลิปไม่กระทบ no-touch</p>
+  </div>
+</div>
+
+<section class="section container">
+  @if (TempData["AdminOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["AdminError"] is string errMsg)
+  {
+    <div class="alert alert-info stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  @if (!Model.Pending.Any())
+  {
+    <div class="glass stack-md" style="padding:24px"><p class="muted">ไม่มีสลิปที่รอตรวจสอบ</p></div>
+  }
+  else
+  {
+    <div class="glass" style="padding:8px 0; overflow-x:auto">
+      <table style="width:100%; border-collapse:collapse">
+        <thead>
+          <tr class="muted tiny" style="text-align:left">
+            <th style="padding:10px 16px">ผู้ส่ง</th>
+            <th style="padding:10px 16px">ยอดที่แจ้ง</th>
+            <th style="padding:10px 16px">ยอดบิล</th>
+            <th style="padding:10px 16px">ประเภท</th>
+            <th style="padding:10px 16px">วันที่โอน</th>
+            <th style="padding:10px 16px">ส่งเมื่อ</th>
+            <th style="padding:10px 16px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (var s in Model.Pending)
+          {
+            <tr style="border-top:1px solid rgba(255,255,255,.06)">
+              <td style="padding:10px 16px">@s.UserEmail</td>
+              <td style="padding:10px 16px">฿@s.AmountClaimed.ToString("N2")</td>
+              <td style="padding:10px 16px">฿@s.InvoiceAmount.ToString("N2") @s.Currency</td>
+              <td style="padding:10px 16px">@s.FeeType</td>
+              <td style="padding:10px 16px">@s.TransferredAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+              <td style="padding:10px 16px">@s.SubmittedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+              <td style="padding:10px 16px">
+                <a asp-action="PaymentDetail" asp-route-slipId="@s.PaymentSlipId" class="btn btn-ghost btn-sm">ตรวจสอบ</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

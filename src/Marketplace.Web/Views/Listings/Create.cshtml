@@ -1,0 +1,195 @@
+@model Marketplace.Web.Models.Catalog.CreateListingViewModel
+@{
+    ViewData["Title"] = "ลงขายการ์ด";
+
+    var rarities = new[] { "common", "rare", "epic", "legendary" };
+    string RarityOption(string slug) => slug switch
+    {
+        "legendary" => "Legendary",
+        "epic" => "Epic",
+        "rare" => "Rare",
+        _ => "Common"
+    };
+}
+
+@* enctype required for the card-photo upload (CreateListingViewModel.Images, IFormFile). *@
+<form asp-controller="Listings" asp-action="Create" method="post" enctype="multipart/form-data">
+  @Html.AntiForgeryToken()
+
+  @* ===== Page head ===== *@
+  <section class="container page-head">
+    <div class="breadcrumb">หน้าแรก / ลงขายการ์ด</div>
+    <h1>ลงขาย<span class="gradient-text">การ์ด</span></h1>
+  </section>
+
+  @* ===== Top notice (FR-06 ต้องเป็นสมาชิก active) ===== *@
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div>การลงขายต้องเป็นสมาชิกที่ membership active เท่านั้น (FR-06) — <a asp-controller="Membership" asp-action="Index" style="color:var(--primary-fixed)">ตรวจสอบสถานะสมาชิก</a></div>
+    </div>
+  </section>
+
+  <div asp-validation-summary="ModelOnly" class="alert alert-warn" style="display:@(ViewData.ModelState.IsValid ? "none" : "flex")"></div>
+
+  @* ===== Listing form ===== *@
+  <section class="section container" style="padding-top:var(--stack-md)">
+    <div class="glass" style="padding:24px">
+      <div class="section-head" style="margin-bottom:var(--stack-md)">
+        <div><p class="eyebrow">LISTING DETAILS</p><h2 style="font-size:24px">รายละเอียดการ์ด</h2></div>
+      </div>
+
+      @* รูปการ์ด — bind to CreateListingViewModel.Images (IFormFile, multipart). คลิกที่ dropzone เพื่อเลือกไฟล์.
+         backend-dev: validate type/size server-side; ที่นี่ accept= เป็นเพียง hint ฝั่ง client. *@
+      <div class="field">
+        <label asp-for="Images">รูปการ์ด</label>
+        <label for="Images" style="display:block; cursor:pointer; border:2px dashed var(--outline-variant); border-radius:var(--r-md); padding:36px; text-align:center; color:var(--on-surface-variant); background:var(--surface-container-lowest)">
+          <div style="font-size:40px; margin-bottom:8px">🖼️</div>
+          <div>อัปโหลดรูป (เลือกได้หลายไฟล์)</div>
+          <div class="tiny mono" style="margin-top:6px">PNG / JPG สูงสุด 8MB · แนะนำถ่ายหน้า-หลังและซีล PSA</div>
+          <div id="imgNames" class="tiny mono" style="margin-top:10px; color:var(--primary-fixed)"></div>
+        </label>
+        <input id="Images" name="Images" type="file" accept="image/png,image/jpeg" multiple style="display:none"
+               onchange="document.getElementById('imgNames').textContent = Array.from(this.files).map(f=>f.name).join(' · ');">
+        <span asp-validation-for="Images" class="tiny" style="color:var(--rarity-legendary)"></span>
+        @if (Model.ExistingImageUrls.Any())
+        {
+            <div class="flex gap-sm wrap stack-sm">
+                @foreach (var url in Model.ExistingImageUrls)
+                {
+                    <img src="@url" alt="รูปการ์ดที่อัปโหลดไว้" style="width:72px;height:72px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--outline-variant)" />
+                }
+            </div>
+        }
+      </div>
+
+      @* ชื่อการ์ด *@
+      <div class="field">
+        <label asp-for="Title">ชื่อการ์ด</label>
+        <input class="input" type="text" asp-for="Title" placeholder="เช่น Charizard 1st Edition">
+        <span asp-validation-for="Title" class="tiny" style="color:var(--rarity-legendary)"></span>
+      </div>
+
+      @* ชุด/เซ็ต *@
+      <div class="field">
+        <label asp-for="SetLabel">ชุด / เซ็ต</label>
+        <input class="input" type="text" asp-for="SetLabel" placeholder="เช่น Base Set · 1999">
+        <span asp-validation-for="SetLabel" class="tiny" style="color:var(--rarity-legendary)"></span>
+      </div>
+
+      <div class="flex gap-md wrap">
+        @* rarity *@
+        <div class="field" style="flex:1; min-width:200px">
+          <label asp-for="Rarity">ระดับความหายาก (Rarity)</label>
+          <select class="select" asp-for="Rarity">
+            @foreach (var r in rarities)
+            {
+                <option value="@r" selected="@(string.Equals(Model.Rarity, r, StringComparison.OrdinalIgnoreCase))">@RarityOption(r)</option>
+            }
+          </select>
+          <span asp-validation-for="Rarity" class="tiny" style="color:var(--rarity-legendary)"></span>
+        </div>
+        @* เกรด *@
+        <div class="field" style="flex:1; min-width:200px">
+          <label asp-for="GradeLabel">เกรด (ความเห็นผู้ประเมินอิสระ)</label>
+          <select class="select" asp-for="GradeLabel">
+            <option value="PSA 10">PSA 10</option>
+            <option value="PSA 9">PSA 9</option>
+            <option value="PSA 8">PSA 8</option>
+            <option value="BGS 9.5">BGS 9.5</option>
+          </select>
+          <span asp-validation-for="GradeLabel" class="tiny" style="color:var(--rarity-legendary)"></span>
+        </div>
+      </div>
+
+      <div class="flex gap-md wrap">
+        @* ซีเรียล *@
+        <div class="field" style="flex:1; min-width:200px">
+          <label asp-for="SerialLabel">ซีเรียล</label>
+          <input class="input mono" type="text" asp-for="SerialLabel" placeholder="#0042/0050">
+          <span asp-validation-for="SerialLabel" class="tiny" style="color:var(--rarity-legendary)"></span>
+        </div>
+        @* ราคา *@
+        <div class="field" style="flex:1; min-width:200px">
+          <label asp-for="FixedPrice">ราคา (บาท)</label>
+          <input class="input mono" type="number" step="1" min="0" asp-for="FixedPrice" placeholder="128000">
+          <span asp-validation-for="FixedPrice" class="tiny" style="color:var(--rarity-legendary)"></span>
+        </div>
+      </div>
+
+      @* รายละเอียด *@
+      <div class="field">
+        <label asp-for="Description">รายละเอียด</label>
+        <textarea class="textarea" asp-for="Description" placeholder="อธิบายสภาพการ์ด ที่มา ประวัติ และข้อมูลที่ผู้ซื้อควรทราบ"></textarea>
+        <span asp-validation-for="Description" class="tiny" style="color:var(--rarity-legendary)"></span>
+      </div>
+
+      @* Disclaimer มาตรฐาน (เชิงปฏิเสธ) — FR-06, คงไว้ทุกถ้อยคำ, ห้ามคำรับประกัน/การันตี/รับรองความแท้ *@
+      <div class="alert alert-warn">
+        <span>⚠️</span>
+        <div>แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ ไม่รับประกัน ไม่การันตี และไม่รับรองความแท้ของสินค้า ผู้ขายรับผิดชอบความถูกต้องของข้อมูลเอง</div>
+      </div>
+
+      <label class="check" style="margin-top:var(--stack-md)">
+        <input type="checkbox" asp-for="ConfirmAccuracy">
+        <span>ข้าพเจ้ายืนยันว่าข้อมูลถูกต้องและยอมรับเงื่อนไขข้างต้น</span>
+      </label>
+      <span asp-validation-for="ConfirmAccuracy" class="tiny" style="color:var(--rarity-legendary); display:block"></span>
+    </div>
+  </section>
+
+  @* ===== Featured / โปรโมตประกาศ (FR-30) ===== *@
+  <section class="section container" style="padding-top:0">
+    <div class="glass" style="padding:24px">
+      <div class="section-head" style="margin-bottom:var(--stack-md)">
+        <div><p class="eyebrow">BOOST · FR-30</p><h2 style="font-size:24px">โปรโมตประกาศ (Featured)</h2></div>
+      </div>
+      <p class="muted" style="margin-bottom:var(--stack-md)">เลือกแพ็กเกจเพื่อดันประกาศของคุณให้เด่นขึ้น (เลือกได้หลายรายการ)</p>
+      <div class="flex gap-sm wrap">
+        @if (Model.PromotionOptions.Any())
+        {
+            foreach (var opt in Model.PromotionOptions)
+            {
+                var isSelected = Model.SelectedPromotionPackageIds.Contains(opt.PromotionPackageId);
+                <label class="chip @(isSelected ? "active" : "")">
+                  <input type="checkbox" name="SelectedPromotionPackageIds" value="@opt.PromotionPackageId" @(isSelected ? "checked" : "") style="display:none">
+                  @opt.Label · @opt.CreditCost.ToString("N0") เครดิต
+                </label>
+            }
+        }
+        else
+        {
+            @* TODO: frontend-dev — replace sample promotion chips with Model.PromotionOptions เมื่อ backend seed PromotionPackages.
+               ใช้ checkbox name="SelectedPromotionPackageIds" + value=PromotionPackageId เพื่อ bind กลับ. *@
+            <span class="chip">Featured 7 วัน · 50 เครดิต</span>
+            <span class="chip">ดันขึ้นบน 3 วัน · 30 เครดิต</span>
+            <span class="chip">ไฮไลต์สีพิเศษ · 20 เครดิต</span>
+            <span class="chip">ปักหมุดหน้าหมวด 5 วัน · 80 เครดิต</span>
+        }
+      </div>
+      <div class="alert alert-info" style="margin-top:var(--stack-md)">
+        <span>ℹ️</span>
+        <div>ใช้เครดิตในแพลตฟอร์มเท่านั้น (FR-30) — ดูยอดเครดิตที่ <a asp-controller="Credits" asp-action="Index" style="color:var(--primary-fixed)">กระเป๋าเครดิต</a></div>
+      </div>
+    </div>
+  </section>
+
+  @* ===== Actions ===== *@
+  <section class="container" style="margin-bottom:var(--stack-lg)">
+    <div class="flex gap-md wrap">
+      <button type="submit" class="btn btn-primary btn-lg">เผยแพร่ประกาศ</button>
+      <a asp-controller="Explore" asp-action="Index" class="btn btn-ghost btn-lg">ยกเลิก</a>
+    </div>
+  </section>
+</form>
+
+@section Scripts {
+  @* Chip toggle: keep visual .active in sync with the hidden checkbox (FR-30 multi-select). *@
+  <script>
+    document.querySelectorAll('label.chip input[type="checkbox"]').forEach(function (cb) {
+      cb.closest('label.chip').addEventListener('click', function () {
+        setTimeout(function () { cb.closest('label.chip').classList.toggle('active', cb.checked); }, 0);
+      });
+    });
+  </script>
+}

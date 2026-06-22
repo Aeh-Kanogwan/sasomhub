@@ -1,0 +1,35 @@
+# ---- .NET ----
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+artifacts/
+project.lock.json
+*.dll
+*.pdb
+
+# ---- ASP.NET secrets / local config (never commit) ----
+secrets.json
+appsettings.*.local.json
+*.pfx
+*.key
+
+# ---- Uploaded user content (runtime data, not source) ----
+src/Marketplace.Web/wwwroot/uploads/
+
+# ---- Node / Playwright (e2e) ----
+node_modules/
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+e2e/playwright/.cache/
+
+# ---- OS / editor ----
+Thumbs.db
+.DS_Store
+*.swp

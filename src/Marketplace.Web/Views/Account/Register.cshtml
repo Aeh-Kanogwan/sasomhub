@@ -1,0 +1,62 @@
+@model Marketplace.Web.Models.Account.RegisterViewModel
+@{
+    ViewData["Title"] = "สมัครสมาชิก";
+}
+
+@* ===== Auth: Register (FR-01 + consent PDPA, FR-27 free trial, FR-28 referral) ===== *@
+<main class="auth-wrap">
+  <div class="auth-card glass">
+    <p class="eyebrow">◈ JOIN THE VAULT</p>
+    <h1>สมัครสมาชิก</h1>
+    <p class="muted">สร้างบัญชีและเริ่ม <span class="gradient-text">ทดลองฟรี 3 เดือน</span> — เปิดเผยราคาชัดเจนตั้งแต่วันแรก</p>
+
+    @* กล่องเปิดเผยราคา (FR-27) — ห้ามลบ legal text *@
+    <div class="alert alert-info stack-lg">
+      <span>💡</span>
+      <span>ทดลองฟรี 3 เดือนนับจากวันสมัคร หลังจากนั้นค่าสมาชิกรายปี: Normal ฿1,000 / Verified ฿1,500 / Premium ฿2,000 ต่อปี — เราแจ้งเตือนล่วงหน้า 14/3/1 วัน ไม่ตัดเงินเงียบ</span>
+    </div>
+
+    <form class="stack-lg" asp-controller="Account" asp-action="Register" method="post">
+      @Html.AntiForgeryToken()
+      <div asp-validation-summary="ModelOnly" class="alert alert-warn"></div>
+
+      <div class="field">
+        <label asp-for="Email">อีเมล</label>
+        <input class="input" asp-for="Email" type="email" placeholder="you@example.com">
+        <span asp-validation-for="Email" class="tiny" style="color:var(--danger)"></span>
+      </div>
+      <div class="field">
+        <label asp-for="PhoneNumber">เบอร์โทรศัพท์</label>
+        <input class="input" asp-for="PhoneNumber" type="tel" placeholder="08X-XXX-XXXX">
+        <span asp-validation-for="PhoneNumber" class="tiny" style="color:var(--danger)"></span>
+      </div>
+      <div class="field">
+        <label asp-for="Password">รหัสผ่าน</label>
+        <input class="input" asp-for="Password" type="password" placeholder="อย่างน้อย 8 ตัวอักษร">
+        <span asp-validation-for="Password" class="tiny" style="color:var(--danger)"></span>
+      </div>
+      <div class="field">
+        <label asp-for="ConfirmPassword">ยืนยันรหัสผ่าน</label>
+        <input class="input" asp-for="ConfirmPassword" type="password" placeholder="พิมพ์รหัสผ่านอีกครั้ง">
+        <span asp-validation-for="ConfirmPassword" class="tiny" style="color:var(--danger)"></span>
+      </div>
+      <div class="field">
+        <label asp-for="ReferralCode">รหัสผู้แนะนำ (Referral code) — ถ้ามี</label>
+        <input class="input" asp-for="ReferralCode" type="text" placeholder="เช่น NEON-1234 (ไม่บังคับ)">
+        <span asp-validation-for="ReferralCode" class="tiny" style="color:var(--danger)"></span>
+      </div>
+
+      <label class="check stack-md">
+        <input asp-for="ConsentPdpa" type="checkbox">
+        <span>ยินยอมตามนโยบายความเป็นส่วนตัว (PDPA) และเงื่อนไขการใช้งาน</span>
+      </label>
+      <span asp-validation-for="ConsentPdpa" class="tiny" style="color:var(--danger)"></span>
+
+      <button type="submit" class="btn btn-primary btn-block stack-lg">สมัครและเริ่มทดลองฟรี</button>
+    </form>
+
+    <p class="muted tiny stack-md" style="text-align:center">
+      มีบัญชีแล้ว? <a asp-controller="Account" asp-action="Login" style="color:var(--primary-fixed)">เข้าสู่ระบบ</a>
+    </p>
+  </div>
+</main>

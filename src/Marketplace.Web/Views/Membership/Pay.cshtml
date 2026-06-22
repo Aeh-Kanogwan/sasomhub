@@ -1,0 +1,141 @@
+@model Marketplace.Web.Models.Membership.PayInvoiceViewModel
+@using Marketplace.Domain.Enums
+@{
+    ViewData["Title"] = "ชำระค่าสมาชิก";
+
+    string FeeLabel(FeeType t) => t switch
+    {
+        FeeType.MembershipRenewal => "ต่ออายุสมาชิกรายปี",
+        FeeType.MembershipUpgrade => "อัปเกรดระดับสมาชิก",
+        FeeType.Membership => "ค่าสมาชิก",
+        _ => t.ToString()
+    };
+
+    var slip = Model.ExistingSlip;
+    var statusBadge = slip?.Status switch
+    {
+        PaymentSlipStatus.Pending => ("badge-trial", "รอตรวจสอบ"),
+        PaymentSlipStatus.Approved => ("badge-active", "อนุมัติแล้ว"),
+        PaymentSlipStatus.Rejected => ("badge-expired", "ถูกปฏิเสธ"),
+        _ => ("badge-active", "")
+    };
+    var isPaid = Model.InvoiceStatus == FeeInvoiceStatus.Paid;
+    var pendingExists = slip is not null && slip.Status == PaymentSlipStatus.Pending;
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / สมาชิก / ชำระเงิน</div>
+    <p class="eyebrow">◈ MEMBERSHIP PAYMENT</p>
+    <h1>ชำระค่าสมาชิก</h1>
+    <p class="muted stack-md" style="max-width:620px">โอนเข้าบัญชีบริษัทตามรายละเอียดด้านล่าง แล้วอัปโหลดสลิปเพื่อให้ทีมงานตรวจสอบและยืนยัน — ค่าสมาชิกเป็นรายได้ของแพลตฟอร์ม แยกจาก flow การซื้อขายการ์ด</p>
+  </div>
+</div>
+
+<section class="section container">
+  @if (TempData["MembershipOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["MembershipError"] is string errMsg)
+  {
+    <div class="alert alert-info stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  <div class="glass stack-md" style="padding:24px">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap">
+      <div>
+        <div class="muted tiny">รายการ</div>
+        <h3 style="margin:4px 0">@FeeLabel(Model.FeeType)</h3>
+      </div>
+      <div style="text-align:right">
+        <div class="muted tiny">ยอดที่ต้องชำระ</div>
+        <div class="amount">฿@Model.Amount.ToString("N2")<small> @Model.Currency</small></div>
+      </div>
+    </div>
+  </div>
+
+  @* ===== Company bank account (from ConfigVersions) ===== *@
+  <div class="glass stack-md" style="padding:24px">
+    <h4 style="margin-top:0">โอนเข้าบัญชีบริษัท</h4>
+    <table style="width:100%; border-collapse:collapse">
+      <tr><td class="muted" style="padding:6px 0; width:160px">ธนาคาร</td><td>@(string.IsNullOrEmpty(Model.Bank.BankName) ? "—" : Model.Bank.BankName)</td></tr>
+      <tr><td class="muted" style="padding:6px 0">เลขที่บัญชี</td><td><strong>@(string.IsNullOrEmpty(Model.Bank.AccountNo) ? "—" : Model.Bank.AccountNo)</strong></td></tr>
+      <tr><td class="muted" style="padding:6px 0">ชื่อบัญชี</td><td>@(string.IsNullOrEmpty(Model.Bank.AccountName) ? "—" : Model.Bank.AccountName)</td></tr>
+      @if (!string.IsNullOrEmpty(Model.Bank.PromptPayId))
+      {
+        <tr><td class="muted" style="padding:6px 0">พร้อมเพย์</td><td>@Model.Bank.PromptPayId</td></tr>
+      }
+    </table>
+  </div>
+
+  @* ===== Existing slip status ===== *@
+  @if (slip is not null)
+  {
+    <div class="glass stack-md" style="padding:24px">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+        <div>
+          <h4 style="margin:0">สถานะสลิปล่าสุด</h4>
+          <p class="muted tiny stack-sm">ส่งเมื่อ @slip.SubmittedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm") · ยอด ฿@slip.AmountClaimed.ToString("N2")</p>
+        </div>
+        <span class="badge @statusBadge.Item1">@statusBadge.Item2</span>
+      </div>
+      @if (!string.IsNullOrEmpty(slip.ReviewNote))
+      {
+        <p class="muted tiny stack-sm">หมายเหตุจากทีมงาน: @slip.ReviewNote</p>
+      }
+      @if (!string.IsNullOrEmpty(slip.SlipImageUrl))
+      {
+        <a href="@slip.SlipImageUrl" target="_blank" class="btn btn-ghost btn-sm stack-sm">ดูสลิปที่ส่งไป</a>
+      }
+    </div>
+  }
+
+  @* ===== Upload form (hidden once paid or pending) ===== *@
+  @if (isPaid)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>ใบแจ้งหนี้นี้ชำระเรียบร้อยแล้ว</span></div>
+    <a asp-action="Index" class="btn btn-primary">กลับไปหน้าสมาชิก</a>
+  }
+  else if (pendingExists)
+  {
+    <div class="alert alert-info stack-md"><span>⏳</span><span>สลิปของคุณอยู่ระหว่างรอตรวจสอบ ทีมงานจะยืนยันให้โดยเร็ว ไม่ต้องส่งซ้ำ</span></div>
+    <a asp-action="Index" class="btn btn-ghost">กลับไปหน้าสมาชิก</a>
+  }
+  else
+  {
+    <div class="glass stack-md" style="padding:24px">
+      <h4 style="margin-top:0">อัปโหลดสลิปการโอน</h4>
+      <form asp-action="Pay" asp-route-invoiceId="@Model.FeeInvoiceId" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="muted tiny" style="color:#ff8080"></div>
+
+        <div class="stack-md">
+          <label asp-for="AmountClaimed"></label>
+          <input asp-for="AmountClaimed" class="input" type="number" step="0.01" min="0" />
+          <span asp-validation-for="AmountClaimed" class="muted tiny" style="color:#ff8080"></span>
+        </div>
+
+        <div class="stack-md">
+          <label asp-for="TransferredAt"></label>
+          @* format ค่าเป็นระดับนาที (datetime-local ค่า default = step 60) กัน native validation ปัดตกค่าที่ pre-fill มาพร้อมวินาที/มิลลิวินาที *@
+          <input asp-for="TransferredAt" class="input" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+          <span asp-validation-for="TransferredAt" class="muted tiny" style="color:#ff8080"></span>
+        </div>
+
+        <div class="stack-md">
+          <label asp-for="BankRefNote"></label>
+          <input asp-for="BankRefNote" class="input" maxlength="200" placeholder="เช่น เลขอ้างอิงรายการ" />
+        </div>
+
+        <div class="stack-md">
+          <label asp-for="SlipImage"></label>
+          <input asp-for="SlipImage" class="input" type="file" accept="image/png,image/jpeg" />
+          <span asp-validation-for="SlipImage" class="muted tiny" style="color:#ff8080"></span>
+        </div>
+
+        <button type="submit" class="btn btn-buy stack-md">ส่งสลิปเพื่อตรวจสอบ</button>
+      </form>
+    </div>
+  }
+</section>

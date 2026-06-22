@@ -1,0 +1,40 @@
+@model IReadOnlyList<Marketplace.Web.Models.Home.TickerItem>
+@{
+    // Market ticker. Driven by the partial model (HomeViewModel.Ticker) when supplied; when the
+    // caller renders without a model (e.g. _Layout on a page that does not build the ticker, or the
+    // DB is empty/unreachable) we fall back to the static prototype set so the layout stays
+    // self-contained. backend-dev wires real top-movers via HomeController -> HomeViewModel.Ticker.
+    var items = (Model is { Count: > 0 })
+        ? Model.Select(t =>
+            {
+                var pct = t.ChangePercent;
+                var dir = pct >= 0 ? "up" : "down";
+                var arrow = pct >= 0 ? "▲ +" : "▼ ";
+                return (
+                    Sym: t.Symbol,
+                    Price: $"฿{t.Price:N0}",
+                    Dir: dir,
+                    Change: $"{arrow}{pct.ToString("0.0")}%");
+            }).ToArray()
+        : new[]
+        {
+            ("CHARIZARD-1ST", "฿128,000", "up", "▲ +4.2%"),
+            ("PIKACHU-ILLUS", "฿98,500", "down", "▼ -1.1%"),
+            ("BLACK-LOTUS", "฿412,000", "up", "▲ +8.7%"),
+            ("MEWTWO-GX", "฿15,200", "up", "▲ +2.0%"),
+            ("UMBREON-VMAX", "฿42,800", "down", "▼ -3.4%"),
+            ("LUGIA-NEO", "฿67,000", "up", "▲ +5.6%"),
+        };
+}
+<div class="ticker">
+  <div class="ticker-track">
+    @* duplicate the set once for the seamless -50% scroll loop *@
+    @for (var pass = 0; pass < 2; pass++)
+    {
+        foreach (var (sym, price, dir, change) in items)
+        {
+            <span class="ticker-item"><span class="sym">@sym</span> <span class="mono">@price</span> <span class="@dir">@change</span></span>
+        }
+    }
+  </div>
+</div>

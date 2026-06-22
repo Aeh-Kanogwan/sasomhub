@@ -1,0 +1,33 @@
+## .NET / VS
+bin/
+obj/
+.vs/
+*.user
+*.suo
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+*.received.*
+
+## Secrets / local config — NEVER commit (DevSecOps)
+# user-secrets live outside the repo (%APPDATA%\Microsoft\UserSecrets) and are safe,
+# but block any secret-bearing files that might land in the tree:
+secrets.json
+*.secrets.json
+appsettings.*.local.json
+appsettings.Local.json
+appsettings.Production.json
+appsettings.Staging.json
+*.env
+.env
+.env.*
+# certs / keys
+*.pfx
+*.p12
+*.pem
+*.key
+# EF Core local SQL dumps / LocalDB artifacts
+*.mdf
+*.ldf
+*.bak

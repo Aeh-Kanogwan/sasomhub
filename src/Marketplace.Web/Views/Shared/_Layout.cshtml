@@ -1,0 +1,123 @@
+@using System.Security.Claims
+@{
+    // Header/footer state derived from the cookie principal claims.
+    // TODO: backend-dev — set these claims at sign-in (AccountController.Login):
+    //   ClaimTypes.Name = display name, "MembershipTier" = Normal/Verified/Premium,
+    //   "MembershipStatus" = Trial/Active/Expired/Cancelled, "MembershipActive" = "true"/"false".
+    var isAuth = User?.Identity?.IsAuthenticated ?? false;
+    var displayName = User?.Identity?.Name;
+    var tier = User?.FindFirst("MembershipTier")?.Value;
+    var memStatus = User?.FindFirst("MembershipStatus")?.Value;
+    var isMemberActive = string.Equals(User?.FindFirst("MembershipActive")?.Value, "true", StringComparison.OrdinalIgnoreCase);
+
+    string Active(string controller) =>
+        string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), controller, StringComparison.OrdinalIgnoreCase)
+            ? "active" : "";
+
+    var statusBadgeClass = memStatus switch
+    {
+        "Active" => "badge-active",
+        "Trial" => "badge-trial",
+        "Expired" or "Cancelled" => "badge-expired",
+        _ => "badge-active"
+    };
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "Neon Vault") — Neon Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+
+<!-- ===== Market Ticker (FR: ราคาผันผวนการ์ดดัง) ===== -->
+@* Pages that build the ticker (Home) stash it in ViewData["Ticker"]; other pages render with a
+   null model and the partial falls back to the static prototype set. *@
+@await Html.PartialAsync("_Ticker", ViewData["Ticker"] as IReadOnlyList<Marketplace.Web.Models.Home.TickerItem>)
+
+<!-- ===== Navbar (shared) ===== -->
+<nav class="navbar">
+  <div class="container">
+    <a class="brand" asp-controller="Home" asp-action="Index">
+      <span class="logo-mark">◈</span> Neon Vault
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a asp-controller="Home" asp-action="Index" class="@Active("Home")">หน้าแรก</a></li>
+      <li><a asp-controller="Explore" asp-action="Index" class="@Active("Explore")">เรียกดูการ์ด</a></li>
+      <li><a asp-controller="Auctions" asp-action="Index" class="@Active("Auctions")">ประมูลสด</a></li>
+      <li><a asp-controller="Listings" asp-action="Create" class="@Active("Listings")">ลงขายการ์ด</a></li>
+      <li><a asp-controller="Membership" asp-action="Index" class="@Active("Membership")">สมาชิก</a></li>
+      <li><a asp-controller="Credits" asp-action="Index" class="@Active("Credits")">เครดิต</a></li>
+      @if (User?.IsInRole("Admin") ?? false)
+      {
+        <li><a asp-controller="Admin" asp-action="Index" class="@Active("Admin")">ผู้ดูแล</a></li>
+      }
+    </ul>
+    <div class="nav-actions">
+      @if (isAuth)
+      {
+        <a asp-controller="Account" asp-action="Profile" class="btn btn-ghost btn-sm">
+          @(string.IsNullOrEmpty(displayName) ? "โปรไฟล์" : displayName)
+          @if (!string.IsNullOrEmpty(memStatus))
+          {
+            <span class="badge @statusBadgeClass" style="margin-left:6px">@(tier ?? "Member") · @memStatus</span>
+          }
+        </a>
+        <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+          @Html.AntiForgeryToken()
+          <button type="submit" class="btn btn-ghost btn-sm">ออกจากระบบ</button>
+        </form>
+      }
+      else
+      {
+        <a asp-controller="Account" asp-action="Login" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm">สมัครฟรี 3 เดือน</a>
+      }
+      <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+</nav>
+
+@RenderBody()
+
+<!-- ===== Footer (shared) ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" asp-controller="Home" asp-action="Index"><span class="logo-mark">◈</span> Neon Vault</a>
+        <p class="muted stack-md" style="max-width:320px">ตลาดกลางการ์ดสะสม — แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ ไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงินในการซื้อขาย</p>
+      </div>
+      <div>
+        <h5>สำรวจ</h5>
+        <a asp-controller="Explore" asp-action="Index">เรียกดูการ์ด</a>
+        <a asp-controller="Auctions" asp-action="Index">ประมูลสด</a>
+        <a asp-controller="Listings" asp-action="Create">ลงขายการ์ด</a>
+      </div>
+      <div>
+        <h5>บัญชี</h5>
+        <a asp-controller="Membership" asp-action="Index">แพ็กเกจสมาชิก</a>
+        <a asp-controller="Credits" asp-action="Index">กระเป๋าเครดิต</a>
+        <a asp-controller="Account" asp-action="Profile">โปรไฟล์</a>
+      </div>
+      <div>
+        <h5>ช่วยเหลือ</h5>
+        <a asp-controller="Transfer" asp-action="Index">วิธีโอนตรง</a>
+        <a href="#">นโยบาย PDPA</a>
+        <a href="#">เงื่อนไขการใช้งาน</a>
+      </div>
+    </div>
+    <p class="legal">⚖️ <strong>หมายเหตุทางกฎหมาย:</strong> Neon Vault เป็นแพลตฟอร์มตัวกลางสำหรับประกาศซื้อขายการ์ดสะสมเท่านั้น เราไม่รับประกัน ไม่การันตี และไม่รับรองความแท้ของสินค้า ความเห็นจากผู้ประเมินเป็นความเห็นประกอบของบุคคลภายนอกอิสระ การชำระเงินเป็นการโอนตรงระหว่างผู้ซื้อ-ผู้ขาย แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงิน · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้</p>
+  </div>
+</footer>
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

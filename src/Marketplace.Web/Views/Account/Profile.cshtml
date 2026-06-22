@@ -1,0 +1,218 @@
+@model Marketplace.Web.Models.Account.ProfileViewModel
+@{
+    ViewData["Title"] = "โปรไฟล์นักสะสม";
+
+    // Avatar initials from display name.
+    var initials = string.IsNullOrWhiteSpace(Model.DisplayName)
+        ? "??"
+        : new string(Model.DisplayName.Where(char.IsLetterOrDigit).Take(2).ToArray()).ToUpperInvariant();
+    if (string.IsNullOrEmpty(initials)) { initials = "NV"; }
+
+    // FR-27: membership status -> badge class (mirrors _Layout mapping).
+    var statusBadgeClass = Model.MembershipStatus switch
+    {
+        MembershipStatus.Active => "badge-active",
+        MembershipStatus.Trial => "badge-trial",
+        MembershipStatus.Expired or MembershipStatus.Cancelled => "badge-expired",
+        _ => "badge-active"
+    };
+
+    // XP progress width (guard against divide-by-zero).
+    var xpPct = Model.XpForNextLevel > 0
+        ? (int)Math.Clamp(Math.Round(100.0 * Model.CurrentXp / Model.XpForNextLevel), 0, 100)
+        : 0;
+
+    string RarityLabel(string r) => r?.ToLowerInvariant() switch
+    {
+        "legendary" => "Legendary",
+        "epic" => "Epic",
+        "rare" => "Rare",
+        _ => "Common"
+    };
+}
+
+@* ===== Page head ===== *@
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / โปรไฟล์</div>
+  <h1>โปรไฟล์<span class="gradient-text">นักสะสม</span></h1>
+</section>
+
+@* ===== Profile card + gamified XP (FR-16) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="seller" style="margin-bottom:var(--stack-md)">
+      <div class="avatar">@initials</div>
+      <div>
+        <h2 style="font-size:24px">@Model.DisplayName</h2>
+        <div class="flex gap-sm wrap" style="margin-top:8px">
+          @if (Model.IsVerified)
+          {
+            <span class="badge badge-verified">✓ Verified</span>
+          }
+          <span class="badge @statusBadgeClass">Membership: @Model.MembershipStatus.ToString().ToUpperInvariant()</span>
+        </div>
+      </div>
+    </div>
+
+    @* gamified level + XP *@
+    <p class="eyebrow">Collector Level @Model.CollectorLevel</p>
+    <div class="xp-track" style="margin:8px 0 6px"><div class="xp-fill" style="width:@(xpPct)%"></div></div>
+    <p class="mono tiny muted">@Model.CurrentXp.ToString("N0") / @Model.XpForNextLevel.ToString("N0") XP สู่ Level @(Model.CollectorLevel + 1)</p>
+
+    @* stats *@
+    <div class="flex gap-md wrap" style="margin-top:var(--stack-md)">
+      <div class="glass-soft" style="padding:16px; flex:1; min-width:160px">
+        <div class="tiny muted">Trust Score</div>
+        <div class="mono trust" style="font-size:28px">@Model.TrustScore</div>
+      </div>
+      <div class="glass-soft" style="padding:16px; flex:1; min-width:160px">
+        <div class="tiny muted">ดีลสำเร็จ</div>
+        <div class="mono" style="font-size:28px; color:var(--primary-fixed)">@Model.CompletedDeals.ToString("N0")</div>
+      </div>
+      <div class="glass-soft" style="padding:16px; flex:1; min-width:160px">
+        <div class="tiny muted">การ์ดในคอลเลกชัน</div>
+        <div class="mono" style="font-size:28px; color:var(--primary-fixed)">@Model.CollectionCount.ToString("N0")</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+@* ===== Membership status (FR-27) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">MEMBERSHIP · FR-27</p><h2 style="font-size:24px">สถานะสมาชิก</h2></div>
+    </div>
+    <div class="spec"><span class="k">สถานะ</span><span class="v">@Model.MembershipStatus.ToString().ToUpperInvariant()@(string.IsNullOrEmpty(Model.MembershipTierLabel) ? "" : $" · {Model.MembershipTierLabel}")</span></div>
+    @if (Model.MembershipStatus == MembershipStatus.Trial && Model.TrialEndsAtUtc.HasValue)
+    {
+      <div class="spec"><span class="k">หมดอายุทดลอง</span><span class="v mono">@Model.TrialEndsAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd")</span></div>
+    }
+    @if (Model.PaidThroughUtc.HasValue)
+    {
+      <div class="spec"><span class="k">ชำระถึง</span><span class="v mono">@Model.PaidThroughUtc.Value.ToLocalTime().ToString("yyyy-MM-dd")</span></div>
+    }
+    <a asp-controller="Membership" asp-action="Index" class="btn btn-primary" style="margin-top:var(--stack-md)">ต่ออายุ / อัปเกรดสมาชิก</a>
+  </div>
+</section>
+
+@* ===== Collection gallery (FR-16) ===== *@
+<section class="section container" style="padding-top:0">
+  <div class="section-head">
+    <div><p class="eyebrow">MY COLLECTION</p><h2>คอลเลกชันของฉัน</h2></div>
+    <a asp-controller="Explore" asp-action="Index" class="btn btn-ghost btn-sm">ดูทั้งหมด →</a>
+  </div>
+  <div class="card-grid">
+    @if (Model.Collection.Any())
+    {
+        foreach (var card in Model.Collection)
+        {
+            <a asp-controller="Listings" asp-action="Detail" asp-route-id="@card.ProductId" class="tcard r-@card.Rarity.ToLowerInvariant()">
+              <div class="rarity @card.Rarity.ToLowerInvariant()">@RarityLabel(card.Rarity)</div>
+              <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">@card.Glyph</div></div>
+              <div class="card-body">
+                <div class="card-title">@card.Title</div>
+                @if (!string.IsNullOrEmpty(card.SetLabel)) { <div class="card-set">@card.SetLabel</div> }
+                <div class="card-meta">
+                  <span class="price">@(card.Price.HasValue ? $"฿{card.Price.Value:N0}" : "—")</span>
+                  @if (!string.IsNullOrEmpty(card.GradeLabel)) { <span class="grade">@card.GradeLabel</span> }
+                </div>
+                @if (!string.IsNullOrEmpty(card.SerialLabel)) { <div class="serial">SERIAL @card.SerialLabel</div> }
+              </div>
+            </a>
+        }
+    }
+    else
+    {
+        @* TODO: backend-dev — populate Model.Collection (ListingCardViewModel) from the user's owned products.
+           ตัวอย่าง hardcode ตาม prototype (profile.html) เพื่อให้เห็นดีไซน์ระหว่างยังไม่มีข้อมูลจริง. *@
+        var sampleCards = new[]
+        {
+            new { t = "Charizard 1st Ed.", set = "Base Set · 1999", r = "legendary", g = "PSA 10", p = "฿128,000", s = "#0042/0050", glyph = "🔥" },
+            new { t = "Pikachu Illustrator", set = "Promo · 1998", r = "epic", g = "PSA 9", p = "฿98,500", s = "#0012/0039", glyph = "⚡" },
+            new { t = "Umbreon VMAX Alt", set = "Evolving Skies", r = "rare", g = "PSA 9", p = "฿42,800", s = "#0210/0999", glyph = "🌙" },
+            new { t = "LeBron James Rookie", set = "Topps Chrome", r = "common", g = "BGS 8.5", p = "฿6,400", s = "#0780/3000", glyph = "🏀" }
+        };
+        foreach (var c in sampleCards)
+        {
+            <a asp-controller="Listings" asp-action="Detail" class="tcard r-@c.r">
+              <div class="rarity @c.r">@RarityLabel(c.r)</div>
+              <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">@c.glyph</div></div>
+              <div class="card-body">
+                <div class="card-title">@c.t</div>
+                <div class="card-set">@c.set</div>
+                <div class="card-meta"><span class="price">@c.p</span><span class="grade">@c.g</span></div>
+                <div class="serial">SERIAL @c.s</div>
+              </div>
+            </a>
+        }
+    }
+  </div>
+</section>
+
+@* ===== warn-on-deal (FR-17) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-warn">
+    <span>⚠️</span>
+    <div>การแจ้งเตือนคู่ธุรกรรม (warn-on-deal) จะแสดงด้วยถ้อยคำกลางเฉพาะแก่คุณก่อนตกลงดีล หากคู่ค้าถูกระงับ</div>
+  </div>
+</section>
+
+@* ===== Trust Score history (FR-14) ===== *@
+@if (Model.TrustScoreHistory.Any())
+{
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="glass" style="padding:24px">
+      <div class="section-head" style="margin-bottom:var(--stack-md)">
+        <div><p class="eyebrow">TRUST SCORE · FR-14</p><h2 style="font-size:24px">ประวัติคะแนนความน่าเชื่อถือ</h2></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="mono-table">
+          <thead><tr><th>วันที่</th><th>เหตุผล</th><th>เปลี่ยนแปลง</th><th>คะแนนหลังปรับ</th></tr></thead>
+          <tbody>
+            @foreach (var h in Model.TrustScoreHistory)
+            {
+              <tr>
+                <td>@h.Date.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                <td>@(string.IsNullOrEmpty(h.Reason) ? (h.Note ?? "—") : h.Reason)</td>
+                <td class="@(h.Delta < 0 ? "down" : "up")">@(h.Delta >= 0 ? "+" : "")@h.Delta</td>
+                <td>@h.ScoreAfter</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+}
+
+@* ===== สิทธิอุทธรณ์ (FR-15, due process) ===== *@
+@if (TempData["AppealOk"] is string appealOk)
+{
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="alert alert-info"><span>✅</span><div>@appealOk</div></div>
+  </section>
+}
+@if (TempData["AppealError"] is string appealErr)
+{
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="alert alert-warn"><span>⚠️</span><div>@appealErr</div></div>
+  </section>
+}
+@if (Model.CanAppeal)
+{
+  <section class="container" style="margin-bottom:var(--stack-lg)">
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div>
+        หากถูกปรับ Trust Score หรือถูกระงับ คุณมีสิทธิ์ยื่นอุทธรณ์ภายในกำหนด
+        <form asp-controller="Account" asp-action="Appeal" method="post" style="margin-top:10px">
+          @Html.AntiForgeryToken()
+          <input type="hidden" name="BlacklistEntryId" value="@Model.AppealableEntryId" />
+          <textarea name="AppealNote" class="input" rows="3" placeholder="อธิบายเหตุผลในการอุทธรณ์ (อย่างน้อย 10 ตัวอักษร)" style="width:100%; margin-bottom:10px"></textarea>
+          <button type="submit" class="btn btn-ghost btn-sm">ยื่นอุทธรณ์</button>
+        </form>
+      </div>
+    </div>
+  </section>
+}

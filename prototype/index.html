@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!-- index.html — หน้าแรก/ค้นหา/เรียกดูประกาศ
+     Map FR: FR-08 (Guest ค้นหา/ดูประกาศ), FR-27/IS-14 (trial banner เปิดเผยฟรี 3 เดือน),
+             FR-30/IS-16 (listing โปรโมต Featured), FR-01 (ลิงก์สมัคร) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตลาดของสะสม | หน้าแรก</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Mockup ribbon: เน้นว่าเป็น static prototype -->
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+
+<!-- Trial banner — FR-27 เปิดเผย Free Trial 3 เดือน -->
+<div class="trial-banner">🎁 สมาชิกใหม่ใช้ฟรี 3 เดือน! เปิดเผยราคาชัดเจน ไม่มีตัดเงินเงียบ — <a href="membership.html">ดูแพ็กเกจและราคา</a></div>
+
+<!-- ===== Navbar (เหมือนกันทุกหน้า) ===== -->
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary">สมัครสมาชิก</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero + search (FR-08 ค้นหา Guest ได้) -->
+<header class="hero">
+  <div class="container">
+    <h1>ค้นหาและเรียกดูของสะสมหายาก</h1>
+    <p>พระเครื่อง เหรียญ แสตมป์ ของเล่นวินเทจ และอีกมากมาย — ผู้เยี่ยมชมดูและค้นหาได้ฟรี</p>
+    <form class="search-bar" onsubmit="return false;">
+      <input type="text" placeholder="ค้นหาสินค้า เช่น เหรียญ, พระเครื่อง, แสตมป์...">
+      <button class="btn btn-primary">🔍 ค้นหา</button>
+    </form>
+  </div>
+</header>
+
+<!-- Categories -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">หมวดหมู่ยอดนิยม</h2>
+    <div class="categories">
+      <a href="index.html" class="chip active">ทั้งหมด</a>
+      <a href="index.html" class="chip">🪙 เหรียญ</a>
+      <a href="index.html" class="chip">🧧 พระเครื่อง</a>
+      <a href="index.html" class="chip">📮 แสตมป์</a>
+      <a href="index.html" class="chip">🤖 ของเล่นวินเทจ</a>
+      <a href="index.html" class="chip">🃏 การ์ดสะสม</a>
+      <a href="index.html" class="chip">⌚ นาฬิกา</a>
+    </div>
+  </div>
+</section>
+
+<!-- Product grid (Active listings เท่านั้น — FR-08) -->
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="row-between mb-4">
+      <h2 class="section-title" style="margin:0">ประกาศล่าสุด</h2>
+      <span class="muted small">แสดงเฉพาะประกาศที่เปิดอยู่ (Active)</span>
+    </div>
+    <div class="grid-products">
+
+      <!-- Featured listing — FR-30 โปรโมตด้วยเครดิต -->
+      <a href="listing-detail.html" class="product-card">
+        <div class="product-thumb">🪙
+          <span class="badge badge-featured featured-tag">⭐ โปรโมต</span>
+        </div>
+        <div class="product-body">
+          <div class="product-title">เหรียญหลวงพ่อรุ่นแรก ปี 2510</div>
+          <div class="product-cat">เหรียญ · สภาพสวย</div>
+          <div class="product-price">฿ 45,000</div>
+          <div class="product-meta">
+            <span>ผู้ขาย: somchai_99</span>
+            <span class="trust">⭐ 96</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="auction.html" class="product-card">
+        <div class="product-thumb">🧧
+          <span class="badge badge-warning featured-tag">🔨 ประมูล</span>
+        </div>
+        <div class="product-body">
+          <div class="product-title">พระสมเด็จเลี่ยมทอง</div>
+          <div class="product-cat">พระเครื่อง · ประมูล</div>
+          <div class="product-price">฿ 12,500 <span class="small muted">ราคาปัจจุบัน</span></div>
+          <div class="product-meta">
+            <span>ปิดใน 2 ชม.</span>
+            <span class="trust">⭐ 88</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="listing-detail.html" class="product-card">
+        <div class="product-thumb">📮</div>
+        <div class="product-body">
+          <div class="product-title">แสตมป์รัชกาลที่ 9 ชุดสมบูรณ์</div>
+          <div class="product-cat">แสตมป์</div>
+          <div class="product-price">฿ 8,900</div>
+          <div class="product-meta">
+            <span>ผู้ขาย: stamp_lover</span>
+            <span class="trust">⭐ 92</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="listing-detail.html" class="product-card">
+        <div class="product-thumb">🤖</div>
+        <div class="product-body">
+          <div class="product-title">หุ่นยนต์สังกะสีญี่ปุ่น ยุค 60s</div>
+          <div class="product-cat">ของเล่นวินเทจ</div>
+          <div class="product-price">฿ 22,000</div>
+          <div class="product-meta">
+            <span>ผู้ขาย: retro_toys</span>
+            <span class="trust mid">⭐ 74</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="listing-detail.html" class="product-card">
+        <div class="product-thumb">🃏</div>
+        <div class="product-body">
+          <div class="product-title">การ์ดสะสมหายาก เลขซีเรียลต่ำ</div>
+          <div class="product-cat">การ์ดสะสม</div>
+          <div class="product-price">฿ 5,400</div>
+          <div class="product-meta">
+            <span>ผู้ขาย: card_master</span>
+            <span class="trust">⭐ 90</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="listing-detail.html" class="product-card">
+        <div class="product-thumb">⌚</div>
+        <div class="product-body">
+          <div class="product-title">นาฬิกาพกโบราณ ทองเหลือง</div>
+          <div class="product-cat">นาฬิกา</div>
+          <div class="product-price">฿ 18,000</div>
+          <div class="product-meta">
+            <span>ผู้ขาย: time_keeper</span>
+            <span class="trust">⭐ 85</span>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- เตือน Guest: ต้องสมาชิก active เพื่อ bid/ซื้อ (FR-10/FR-06) -->
+    <div class="alert alert-info mt-5">
+      <span class="ic">ℹ️</span>
+      <div>ผู้เยี่ยมชมสามารถ <strong>ดูและค้นหา</strong> ได้ฟรี — การ <strong>เสนอราคา/ซื้อ</strong> และ <strong>ลงประกาศขาย</strong> ต้องเป็นสมาชิกที่สถานะใช้งานอยู่ (Trial หรือชำระแล้ว) <a href="register.html">สมัครสมาชิก</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer (เหมือนกันทุกหน้า) ===== -->
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม เราเชื่อมผู้ซื้อ-ผู้ขายโดยตรง</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <!-- ข้อจำกัดกฎหมายเด่นชัดในทุกหน้า (Legal #1, #2) -->
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — <strong>ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน</strong> (ผู้ซื้อโอนตรงให้ผู้ขาย) · <strong>ไม่รับประกันความแท้ของสินค้า</strong> · ความเห็นของผู้ประเมินอิสระเป็นเพียงความเห็นประกอบ ไม่ใช่การรับประกันของแพลตฟอร์ม · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

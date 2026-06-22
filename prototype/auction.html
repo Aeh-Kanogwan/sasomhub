@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!-- auction.html — หน้าประมูล
+     Map FR: FR-09 (Auction Open), FR-10 (bid เฉพาะสมาชิก active), FR-11 (anti-shill),
+             FR-12 (ปิดประมูล/countdown), FR-13/16 (Trust Score ผู้ขาย) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ประมูล: พระสมเด็จเลี่ยมทอง | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สมาชิกใหม่ใช้ฟรี 3 เดือน — <a href="membership.html">ดูแพ็กเกจ</a></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary">สมัครสมาชิก</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container">
+    <p class="small muted mb-3"><a href="index.html">หน้าแรก</a> / ประมูล / พระสมเด็จเลี่ยมทอง</p>
+
+    <div class="detail-grid">
+      <!-- ซ้าย: รูป + ประวัติ bid -->
+      <div>
+        <div class="big-image">🧧</div>
+        <div class="thumb-row"><div>🧧</div><div>🔍</div><div>📐</div></div>
+
+        <!-- FR-11: ป้ายแจ้งระบบ anti-shill -->
+        <div class="alert alert-info mt-4">
+          <span class="ic">🛡️</span>
+          <div>การประมูลนี้มีระบบ <strong>ตรวจจับการปั่นราคา (Anti-shill)</strong> — bid ที่ต้องสงสัยจะถูกตัดออกจากการคิดผู้ชนะและแจ้งทีมงานตรวจสอบ</div>
+        </div>
+
+        <!-- FR-10: ประวัติ bid -->
+        <div class="card card-pad mt-4">
+          <h3>ประวัติการเสนอราคา</h3>
+          <table class="table">
+            <thead><tr><th>ผู้เสนอ</th><th>ราคา</th><th>เวลา</th></tr></thead>
+            <tbody>
+              <tr><td>bid****21</td><td><strong>฿ 12,500</strong></td><td>14:32</td></tr>
+              <tr><td>som****k9</td><td>฿ 12,000</td><td>14:20</td></tr>
+              <tr><td>col****88</td><td>฿ 11,500</td><td>13:58</td></tr>
+              <tr><td>new****03</td><td><span class="badge badge-danger">⚠ ถูกตัด (ต้องสงสัย)</span> ฿ 11,800</td><td>13:50</td></tr>
+              <tr><td>bid****21</td><td>฿ 11,000</td><td>13:40</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ขวา: ราคาปัจจุบัน + countdown + เสนอราคา -->
+      <div>
+        <div class="card card-pad">
+          <h1 style="font-size:22px;margin:0 0 8px;">พระสมเด็จเลี่ยมทอง</h1>
+          <span class="badge badge-warning">🔨 กำลังประมูล</span>
+
+          <div class="muted small mt-3">ราคาปัจจุบัน</div>
+          <div class="price-box">฿ 12,500</div>
+          <div class="muted small">ขั้นต่ำการเสนอครั้งถัดไป: ฿ 13,000 (step ฿ 500)</div>
+
+          <!-- FR-12: นับถอยหลังปิดประมูล -->
+          <div class="muted small mt-4 text-center">เหลือเวลา</div>
+          <div class="countdown">
+            <div class="seg"><b>00</b><span>วัน</span></div>
+            <div class="seg"><b>01</b><span>ชม.</span></div>
+            <div class="seg"><b>58</b><span>นาที</span></div>
+            <div class="seg"><b>12</b><span>วิ</span></div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="row-between mb-3">
+            <div>
+              <div class="muted small">ผู้ขาย</div>
+              <strong>monk_amulet</strong> <span class="badge badge-verified">✓ Verified</span>
+            </div>
+            <div class="text-center">
+              <div class="muted small">Trust Score</div>
+              <span class="trust">⭐ 88</span>
+            </div>
+          </div>
+
+          <!-- FR-10: ช่องเสนอราคา + สถานะต้องเป็นสมาชิก active -->
+          <div class="form-group">
+            <label>เสนอราคาของคุณ (บาท)</label>
+            <input class="input" type="number" placeholder="13,000" min="13000" step="500">
+          </div>
+
+          <!-- สถานะ: ต้องเป็นสมาชิก active (Guest/expired bid ไม่ได้) -->
+          <div class="alert alert-warning">
+            <span class="ic">🔒</span>
+            <div><strong>ต้องเป็นสมาชิกที่สถานะใช้งานอยู่ (Active/Trial)</strong> จึงจะเสนอราคาได้ — การลงทะเบียนอย่างเดียวไม่พอ <a href="membership.html">ต่ออายุ/ชำระค่าสมาชิก</a></div>
+          </div>
+          <button class="btn btn-accent btn-lg btn-block is-disabled" title="ต้องเป็นสมาชิก active">🔨 เสนอราคา (ต้องเป็นสมาชิก active)</button>
+          <p class="text-center small muted mt-2"><a href="login.html">เข้าสู่ระบบ</a> หรือ <a href="register.html">สมัครสมาชิก</a> เพื่อเข้าร่วมประมูล</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน · ไม่รับประกันความแท้ของสินค้า · เครดิตถอน/โอนเป็นเงินสดไม่ได้
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

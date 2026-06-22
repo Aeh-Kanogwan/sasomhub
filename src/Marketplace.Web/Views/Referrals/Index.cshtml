@@ -1,0 +1,100 @@
+@model Marketplace.Web.Models.Referrals.ReferralsViewModel
+@{
+    ViewData["Title"] = "เชิญเพื่อน";
+
+    string StatusLabel(Marketplace.Domain.Enums.ReferralStatus s) => s switch
+    {
+        Marketplace.Domain.Enums.ReferralStatus.Pending => "รอเงื่อนไข",
+        Marketplace.Domain.Enums.ReferralStatus.Qualified => "ผ่านเงื่อนไข",
+        Marketplace.Domain.Enums.ReferralStatus.Rewarded => "ได้รับเครดิตแล้ว",
+        Marketplace.Domain.Enums.ReferralStatus.Rejected => "ไม่ผ่าน",
+        _ => s.ToString(),
+    };
+}
+
+@* ===== Page head ===== *@
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / เชิญเพื่อน</div>
+  <h1>เชิญ<span class="gradient-text">เพื่อน</span></h1>
+</section>
+
+@* ===== My code + earned (single-level) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="balance-hero glass">
+    <div>
+      <p class="eyebrow">รหัสแนะนำของคุณ (single-level)</p>
+      @if (!string.IsNullOrEmpty(Model.MyReferralCode))
+      {
+        <div class="amount mono gradient-text">@Model.MyReferralCode</div>
+        <p class="muted mono tiny">เครดิตได้รับแล้ว: @Model.TotalCreditEarned.ToString("N0") · เพื่อนที่ผ่านเงื่อนไข: @Model.RewardedCount</p>
+      }
+      else
+      {
+        <div class="amount mono">—</div>
+        <p class="muted mono tiny">รหัสแนะนำของคุณกำลังเตรียมพร้อม</p>
+      }
+    </div>
+    <div class="flex gap-md wrap">
+      @* FR-28: คัดลอกรหัสเชิญเพื่อน. site.js ผูก [data-copy] ให้คัดลอกค่าใน attribute. *@
+      @if (!string.IsNullOrEmpty(Model.MyReferralCode))
+      {
+        <button type="button" class="btn btn-secondary" data-copy="@Model.MyReferralCode">คัดลอกรหัสเชิญเพื่อน</button>
+      }
+      else
+      {
+        <button type="button" class="btn btn-secondary" disabled title="รหัสแนะนำของคุณกำลังเตรียมพร้อม">คัดลอกรหัสเชิญเพื่อน</button>
+      }
+      <a asp-controller="Credits" asp-action="Index" class="btn btn-primary">ดูกระเป๋าเครดิต</a>
+    </div>
+  </div>
+</section>
+
+@* ===== Non-cashable / single-level legal note (FR-28/29 — ห้ามลบ) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-warn">
+    <span>⚠️</span>
+    <div>การแนะนำเป็นแบบชั้นเดียว (single-level) เท่านั้น — ไม่มีการจ่ายต่อหลายชั้น และเครดิตที่ได้ถอน แลกเป็นเงินสด หรือโอนให้ผู้อื่นไม่ได้</div>
+  </div>
+</section>
+
+@* ===== Invited list (direct invitees only) ===== *@
+<section class="section container" style="padding-top:0">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">REFERRALS · FR-28</p><h2 style="font-size:24px">เพื่อนที่คุณเชิญ</h2></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="mono-table">
+        <thead>
+          <tr>
+            <th>ผู้ถูกเชิญ</th>
+            <th>สถานะ</th>
+            <th>เครดิตที่ได้</th>
+            <th>วันที่เชิญ</th>
+            <th>วันที่ได้เครดิต</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Model.Invited.Any())
+          {
+              foreach (var row in Model.Invited)
+              {
+                  <tr>
+                    <td>@row.InviteeDisplayName</td>
+                    <td>@StatusLabel(row.Status)</td>
+                    <td class="@(row.CreditToReferrer > 0 ? "up" : "")">@(row.CreditToReferrer > 0 ? "+" + row.CreditToReferrer.ToString("N0") : "—")</td>
+                    <td>@row.InvitedAtUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                    <td>@(row.RewardedAtUtc.HasValue ? row.RewardedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd") : "—")</td>
+                  </tr>
+              }
+          }
+          else
+          {
+              <tr><td colspan="5" class="muted">ยังไม่มีเพื่อนที่คุณเชิญ — แชร์รหัสด้านบนเพื่อเริ่มรับเครดิต</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="muted tiny" style="margin-top:var(--stack-md)">เครดิตจากการแนะนำเป็นแบบชั้นเดียว (single-level) เท่านั้น — ไม่มีการจ่ายต่อหลายชั้น</p>
+  </div>
+</section>

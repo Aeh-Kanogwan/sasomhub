@@ -1,0 +1,41 @@
+@model Marketplace.Web.Models.Admin.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "แดชบอร์ดผู้ดูแล";
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / ผู้ดูแล</div>
+    <p class="eyebrow">◈ ADMIN</p>
+    <h1>แดชบอร์ดผู้ดูแล</h1>
+  </div>
+</div>
+
+<section class="section container">
+  @if (TempData["AdminOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["AdminError"] is string errMsg)
+  {
+    <div class="alert alert-info stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  <div class="plan-grid">
+    <a class="plan glass" asp-action="Payments" style="text-decoration:none">
+      <h3>สลิปรอตรวจสอบ</h3>
+      <div class="amount">@Model.PendingSlipCount</div>
+      <p class="muted tiny">ค่าสมาชิกที่สมาชิกอัปสลิปมาแล้วรอยืนยัน</p>
+    </a>
+    <div class="plan glass">
+      <h3>ข้อพิพาทที่เปิดอยู่</h3>
+      <div class="amount">@Model.OpenDisputeCount</div>
+      <p class="muted tiny">Open / UnderReview</p>
+    </div>
+    <div class="plan glass">
+      <h3>รอพิจารณาแบน</h3>
+      <div class="amount">@Model.PendingBanReviewCount</div>
+      <p class="muted tiny">บัญชีที่ถูกตั้งสถานะ PendingBanReview</p>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!-- create-listing.html — ลงประกาศขาย
+     Map FR: FR-06 (ลงประกาศ + ต้องสมาชิก active + disclaimer มาตรฐาน + KYC threshold),
+             FR-30/FR-23 (ใช้เครดิตซื้อตำแหน่งโปรโมต Featured), FR-07 (ขอความเห็นผู้ประเมินอิสระ) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลงประกาศขาย | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สถานะของคุณ: สมาชิกทดลอง (Trial) ใช้งานอยู่ — ลงประกาศได้ปกติ</div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="profile.html" class="btn btn-ghost">โปรไฟล์</a>
+      <a href="credits.html" class="btn btn-outline">💎 เครดิต: 250</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container" style="max-width:720px;">
+    <h1 class="section-title">ลงประกาศขายสินค้า</h1>
+
+    <!-- FR-06: gate สมาชิก active -->
+    <div class="alert alert-success">
+      <span class="ic">✓</span>
+      <div>สถานะสมาชิกของคุณ: <strong>Trial (ใช้งานอยู่)</strong> — มีสิทธิ์ลงประกาศ. หากหมดอายุและยังไม่ชำระ ระบบจะระงับการลงประกาศ <a href="membership.html">ดูแพ็กเกจ</a></div>
+    </div>
+
+    <form onsubmit="window.location='listing-detail.html';return false;">
+      <div class="card card-pad">
+        <div class="form-group">
+          <label>ชื่อสินค้า <span class="required">*</span></label>
+          <input class="input" type="text" placeholder="เช่น เหรียญหลวงพ่อรุ่นแรก ปี 2510" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>หมวดหมู่ <span class="required">*</span></label>
+            <select class="select" required>
+              <option value="">เลือกหมวดหมู่</option>
+              <option>เหรียญ</option><option>พระเครื่อง</option><option>แสตมป์</option>
+              <option>ของเล่นวินเทจ</option><option>การ์ดสะสม</option><option>นาฬิกา</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>รูปแบบการขาย <span class="required">*</span></label>
+            <select class="select" required>
+              <option>ขายราคาคงที่</option>
+              <option>ประมูล</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>ราคา / ราคาเริ่มประมูล (บาท) <span class="required">*</span></label>
+            <input class="input" type="number" placeholder="45000" required>
+          </div>
+          <div class="form-group">
+            <label>สภาพสินค้า</label>
+            <select class="select"><option>สวยเดิม</option><option>ดี</option><option>ผ่านการใช้งาน</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>รายละเอียด <span class="required">*</span></label>
+          <textarea class="textarea" placeholder="อธิบายสินค้า ที่มา สภาพ ตำหนิ ฯลฯ" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>รูปภาพ</label>
+          <div class="card" style="border-style:dashed;padding:28px;text-align:center;color:var(--color-text-muted);cursor:pointer;">
+            📷 คลิกเพื่ออัปโหลดรูป (สูงสุด 8 รูป)
+          </div>
+        </div>
+      </div>
+
+      <!-- FR-06: KYC threshold เตือน -->
+      <div class="alert alert-warning">
+        <span class="ic">🪪</span>
+        <div>หากมูลค่าสินค้าเกินเกณฑ์ที่กำหนด ระบบจะให้คุณ <strong>ยืนยันตัวตน (e-KYC ผ่าน NDID)</strong> เป็นสมาชิก Verified ก่อนเผยแพร่</div>
+      </div>
+
+      <!-- FR-07: ขอความเห็นผู้ประเมินอิสระ -->
+      <div class="card card-pad mt-4">
+        <div class="checkbox-row">
+          <input type="checkbox" id="appraise">
+          <label for="appraise" style="font-weight:500;">ขอ <strong>“ความเห็นประกอบจากผู้ประเมินอิสระ”</strong> สำหรับประกาศนี้ (เป็นความเห็นประกอบ ไม่ใช่การรับประกันของแพลตฟอร์ม)</label>
+        </div>
+      </div>
+
+      <!-- FR-30: ใช้เครดิตซื้อตำแหน่งโปรโมต Featured -->
+      <div class="card card-pad mt-4">
+        <h3>⭐ โปรโมตประกาศ (Featured) — ใช้เครดิต</h3>
+        <p class="muted small">ดันประกาศขึ้นตำแหน่งเด่น เพิ่มการมองเห็น (หักจากเครดิตในแพลตฟอร์ม ไม่ใช่เงินซื้อขาย)</p>
+        <div class="form-group">
+          <label>เลือกแพ็กเกจโปรโมต</label>
+          <select class="select">
+            <option value="0">ไม่โปรโมต</option>
+            <option value="50">Featured 3 วัน — 50 เครดิต</option>
+            <option value="100">Featured 7 วัน — 100 เครดิต</option>
+            <option value="180">Featured 14 วัน — 180 เครดิต</option>
+          </select>
+          <div class="hint">เครดิตคงเหลือ: <strong>250</strong> · <a href="credits.html">ดูกระเป๋าเครดิต</a></div>
+        </div>
+      </div>
+
+      <!-- FR-06: disclaimer มาตรฐานตัวกลาง -->
+      <div class="alert alert-danger mt-4">
+        <span class="ic">⚠️</span>
+        <div><strong>คำชี้แจงก่อนลงประกาศ:</strong> แพลตฟอร์มเป็น <strong>ตัวกลาง</strong> ไม่รับประกันความแท้ ไม่รับ/ไม่ถือเงิน — ผู้ขายต้องรับผิดชอบข้อมูลสินค้าของตน ห้ามใช้ข้อความ “รับประกัน / การันตี / ของแท้ 100%”</div>
+      </div>
+      <div class="checkbox-row mb-4">
+        <input type="checkbox" id="agree" required>
+        <label for="agree" style="font-weight:500;"><span class="required">*</span> ข้าพเจ้ารับทราบและยอมรับคำชี้แจงข้างต้น</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">เผยแพร่ประกาศ</button>
+    </form>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน · ไม่รับประกันความแท้ · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

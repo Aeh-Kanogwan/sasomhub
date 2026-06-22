@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!-- membership.html — แพ็กเกจสมาชิก
+     Map FR: FR-27 (3 tier รายปี Normal 1000/Verified 1500/Premium 2000 + Free Trial + ต่ออายุปีต่อปี),
+             FR-05 (อัพเกรด tier), FR-27 auto-renew toggle, FR-32 (แจ้งเตือน 14/3/1), FR-35 (price snapshot/ไม่ย้อนหลัง) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แพ็กเกจสมาชิก | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 ทุกแพ็กเกจ ใช้ฟรี 3 เดือนก่อนเริ่มคิดค่าสมาชิก — ราคาแสดงชัดเจน</div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary">สมัครสมาชิก</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container">
+    <div class="text-center mb-4">
+      <h1 class="section-title">แพ็กเกจสมาชิก (รายปี)</h1>
+      <p class="muted">เลือกระดับที่เหมาะกับคุณ — <span class="badge badge-trial">🎁 ฟรี 3 เดือน</span> ทุกแพ็กเกจ</p>
+    </div>
+
+    <!-- FR-32: แจ้งเตือนล่วงหน้า -->
+    <div class="alert alert-info">
+      <span class="ic">🔔</span>
+      <div>เราจะ <strong>แจ้งเตือนล่วงหน้า 14 / 3 / 1 วัน</strong> ก่อนหมดทดลองหรือหมดรอบสมาชิกทุกครั้ง (มีบันทึกหลักฐานการแจ้ง) — และจะ <strong>ไม่ตัดเงินอัตโนมัติ</strong> หากคุณไม่ได้เปิด Auto-renew</div>
+    </div>
+
+    <!-- FR-27: 3 tier ราคาตามสเปก -->
+    <div class="tiers mt-5">
+      <div class="tier">
+        <h3>Normal</h3>
+        <span class="badge badge-neutral">พื้นฐาน</span>
+        <div class="price mt-3">฿1,000 <small>/ ปี</small></div>
+        <span class="badge badge-trial mt-2">🎁 ฟรี 3 เดือนแรก</span>
+        <ul>
+          <li>ลงประกาศขาย (จำกัดจำนวน)</li>
+          <li>เสนอราคา/ซื้อได้ เมื่อ active</li>
+          <li>รับเครดิตจาก Referral</li>
+        </ul>
+        <a href="transfer.html" class="btn btn-outline btn-block">เลือก Normal</a>
+      </div>
+
+      <div class="tier popular">
+        <h3>Verified</h3>
+        <span class="badge badge-verified">✓ ยืนยันตัวตน (e-KYC)</span>
+        <div class="price mt-3">฿1,500 <small>/ ปี</small></div>
+        <span class="badge badge-trial mt-2">🎁 ฟรี 3 เดือนแรก</span>
+        <ul>
+          <li>ทุกสิทธิ์ของ Normal</li>
+          <li>ป้าย Verified เพิ่มความน่าเชื่อถือ</li>
+          <li>ลงสินค้ามูลค่าสูงได้</li>
+          <li>เพิ่ม limit การลงประกาศ</li>
+        </ul>
+        <a href="transfer.html" class="btn btn-primary btn-block">อัพเกรดเป็น Verified</a>
+      </div>
+
+      <div class="tier">
+        <h3>Premium</h3>
+        <span class="badge badge-premium">★ พรีเมียม</span>
+        <div class="price mt-3">฿2,000 <small>/ ปี</small></div>
+        <span class="badge badge-trial mt-2">🎁 ฟรี 3 เดือนแรก</span>
+        <ul>
+          <li>ทุกสิทธิ์ของ Verified</li>
+          <li>โปรโมต/Feature listing</li>
+          <li>ลดค่าธรรมเนียมการลงประกาศ</li>
+          <li>การสนับสนุนระดับพรีเมียม</li>
+        </ul>
+        <a href="transfer.html" class="btn btn-accent btn-block">อัพเกรดเป็น Premium</a>
+      </div>
+    </div>
+
+    <!-- Auto-renew toggle + ต่ออายุปีต่อปี (FR-27) -->
+    <div class="card card-pad mt-5" style="max-width:620px;margin-left:auto;margin-right:auto;">
+      <div class="row-between">
+        <div>
+          <strong>ต่ออายุอัตโนมัติ (Auto-renew)</strong>
+          <p class="muted small" style="margin:4px 0 0;">ต่ออายุปีต่อปีอัตโนมัติเมื่อถึงรอบ — ปิดได้ทุกเมื่อก่อนวันตัดรอบ</p>
+        </div>
+        <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+      </div>
+      <hr class="divider">
+      <!-- FR-35: ราคาไม่ย้อนหลัง / price snapshot -->
+      <p class="small muted">
+        ℹ️ ระบบจะ <strong>ตัดเงินเฉพาะเมื่อมีหลักฐานว่าได้แจ้งเตือนครบแล้ว</strong> และคิดราคาตามเวอร์ชันที่ใช้ ณ วันต่ออายุ — <strong>การเปลี่ยนราคาในอนาคตจะไม่กระทบรอบที่คุณชำระไปแล้ว</strong> (เก็บ price snapshot)
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> ค่าสมาชิกเป็นรายได้ของแพลตฟอร์ม <strong>แยกขาดจากเงินซื้อขายระหว่างผู้ใช้</strong> (ไม่ใช่ % commission) · แพลตฟอร์มไม่รับ/ไม่ถือเงินซื้อขาย · ไม่รับประกันความแท้ของสินค้า
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

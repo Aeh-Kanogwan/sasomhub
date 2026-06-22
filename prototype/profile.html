@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!-- profile.html — โปรไฟล์ / Trust Score ตนเอง
+     Map FR: FR-16 (ดูคะแนน + ประวัติ Trust Score), FR-13/14 (TrustScoreHistory),
+             FR-27 (สถานะ membership Trial/Active/วันหมดอายุ), FR-17 (warn-on-deal demo),
+             FR-04 (สิทธิ PDPA export/ลบข้อมูล), FR-36 (account state) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โปรไฟล์ของฉัน | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สถานะ: สมาชิกทดลอง (Trial) — เหลือ 87 วัน · ทดลองหมด 17 ก.ย. 2569</div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="credits.html" class="btn btn-outline">💎 250</a>
+      <a href="login.html" class="btn btn-ghost">ออกจากระบบ</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container">
+    <div class="detail-grid">
+      <!-- ซ้าย: ข้อมูล + Trust Score history -->
+      <div>
+        <!-- หัวโปรไฟล์ + Trust Score (FR-16) -->
+        <div class="card card-pad">
+          <div class="row-between">
+            <div style="display:flex;gap:16px;align-items:center;">
+              <div style="width:64px;height:64px;border-radius:50%;background:var(--color-primary-soft);display:flex;align-items:center;justify-content:center;font-size:30px;">👤</div>
+              <div>
+                <h1 style="font-size:22px;margin:0;">collector_2569</h1>
+                <span class="badge badge-trial">🎁 Trial Active</span>
+                <span class="badge badge-neutral">Normal</span>
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="muted small">Trust Score</div>
+              <span class="trust" style="font-size:18px;">⭐ 100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FR-14/16: ประวัติคะแนน -->
+        <div class="card card-pad mt-4">
+          <h3>ประวัติ Trust Score</h3>
+          <table class="table">
+            <thead><tr><th>วันที่</th><th>เหตุการณ์</th><th>การเปลี่ยนแปลง</th><th>คะแนน</th></tr></thead>
+            <tbody>
+              <tr><td>05 มิ.ย. 69</td><td>รีวิวดีจากผู้ซื้อ</td><td class="amount-plus">+0</td><td>100</td></tr>
+              <tr><td>05 มิ.ย. 69</td><td>สร้างบัญชี (เริ่มต้น)</td><td class="amount-plus">+100</td><td>100</td></tr>
+            </tbody>
+          </table>
+          <p class="muted small">ℹ️ คะแนนเริ่มต้น 100 · ลหุโทษ -20/ครั้ง · ต่ำกว่า 60 จะถูกระงับชั่วคราว (มีสิทธิ์อุทธรณ์)</p>
+        </div>
+
+        <!-- FR-17: warn-on-deal demo -->
+        <div class="card card-pad mt-4">
+          <h3>🔔 ตัวอย่างคำเตือนคู่ธุรกรรม (Warn-on-deal)</h3>
+          <p class="muted small">ระบบจะแสดงคำเตือนนี้ <strong>เฉพาะแก่คุณ</strong> ก่อนตกลงดีลกับคู่ค้าที่ถูกระงับ (ไม่เปิดเผยต่อสาธารณะ ใช้ถ้อยคำกลาง):</p>
+          <div class="alert alert-warning" style="margin:0;">
+            <span class="ic">⚠️</span>
+            <div>“คู่ค้ารายนี้ถูกระงับชั่วคราวเนื่องจากละเมิดข้อกำหนดข้อ 6 โปรดใช้ความระมัดระวังเป็นพิเศษ” <span class="muted">(ตัวอย่างเดโม)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ขวา: สถานะสมาชิก + PDPA -->
+      <div>
+        <!-- FR-27: สถานะ membership -->
+        <div class="card card-pad">
+          <h3>สถานะสมาชิก</h3>
+          <ul class="info-list">
+            <li><span>ระดับ</span><span><span class="badge badge-neutral">Normal</span></span></li>
+            <li><span>สถานะ</span><span><span class="badge badge-trial">Trial Active</span></span></li>
+            <li><span>วันหมดทดลอง</span><span>17 ก.ย. 2569</span></li>
+            <li><span>ค่าสมาชิกรายปี</span><span>฿1,000 / ปี</span></li>
+            <li><span>Auto-renew</span><span class="muted">ปิดอยู่</span></li>
+            <li><span>สถานะบัญชี</span><span><span class="badge badge-trial">Active</span></span></li>
+          </ul>
+          <a href="membership.html" class="btn btn-primary btn-block mt-3">จัดการ/อัพเกรดสมาชิก</a>
+        </div>
+
+        <!-- FR-04: สิทธิ PDPA -->
+        <div class="card card-pad mt-4">
+          <h3>ความเป็นส่วนตัว (PDPA)</h3>
+          <p class="muted small">คุณมีสิทธิ์เข้าถึง/แก้ไข/ลบ/ขอสำเนาข้อมูลของคุณ</p>
+          <button class="btn btn-ghost btn-block">📥 ขอสำเนาข้อมูลของฉัน</button>
+          <button class="btn btn-ghost btn-block mt-2">⚙️ จัดการความยินยอม (Consent)</button>
+          <button class="btn btn-ghost btn-block mt-2">🗑️ ขอลบบัญชี/ข้อมูล</button>
+        </div>
+
+        <!-- account state machine note (FR-36) -->
+        <div class="alert alert-info mt-4">
+          <span class="ic">⚖️</span>
+          <div class="small">การระงับ/แบนทุกกรณีมี <strong>กระบวนการที่เป็นธรรม (Due Process)</strong> — แบนถาวรต้องผ่านการยืนยันของเจ้าหน้าที่ (human-in-the-loop) และคุณมีสิทธิ์อุทธรณ์เสมอ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน · ไม่รับประกันความแท้ · เครดิตถอน/โอนเป็นเงินสดไม่ได้ · การลงทัณฑ์มี due process
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

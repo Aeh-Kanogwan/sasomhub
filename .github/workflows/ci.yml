@@ -1,0 +1,59 @@
+# CI skeleton — build + test (DevSecOps)
+# STATUS: OPTIONAL / NOT YET RUN. ยังไม่เคยรันบน CI จริง (เครื่อง author ไม่มี SDK).
+# เปิดใช้เมื่อ push repo ขึ้น GitHub แล้ว ปรับ paths/branch ตามจริงได้
+#
+# หลักการ: build + test ทุก PR/บน main, ฝัง security scan (dependency) ตั้งแต่ pipeline
+# ไม่ใส่ secret ใด ๆ ใน workflow นี้ (test ใช้ EF Core InMemory จึงไม่ต้องมี DB/secret)
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build + test (.NET 8)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore Marketplace.sln
+
+      - name: Build (no restore)
+        run: dotnet build Marketplace.sln -c Release --no-restore
+
+      - name: Test (no build)
+        run: dotnet test Marketplace.sln -c Release --no-build --verbosity normal
+
+      # Security: ตรวจ NuGet dependency ที่มี known vulnerability — ไม่ fail build แต่ log ออกมา
+      # (ยกระดับเป็น fail ได้ภายหลังด้วยการ grep ผลลัพธ์)
+      - name: Dependency vulnerability scan
+        run: dotnet list Marketplace.sln package --vulnerable --include-transitive || true
+
+  # OPTIONAL: integration test กับ SQL Server จริง (trigger/filtered index/CHECK ที่ InMemory ครอบไม่ถึง)
+  # ยังไม่เปิด เพราะยังไม่มี integration test project ที่ตั้งค่าให้ใช้ MARKETPLACE_CONNECTION
+  # เปิดใช้เมื่อมี:
+  #   services:
+  #     mssql:
+  #       image: mcr.microsoft.com/mssql/server:2022-latest
+  #       env: { ACCEPT_EULA: 'Y', MSSQL_SA_PASSWORD: '<from-secrets>' }
+  #       ports: ['1433:1433']
+  #   env:
+  #     MARKETPLACE_CONNECTION: 'Server=localhost,1433;Database=MarketplaceDb;User Id=sa;Password=<from-secrets>;TrustServerCertificate=True'
+  #   steps: ... apply sql/schema.sql แล้วรัน integration tests ที่ verify trigger/index ของจริง

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!-- listing-detail.html — รายละเอียดสินค้า
+     Map FR: FR-06 (disclaimer ตัวกลาง ไม่รับประกันแท้), FR-07/FR-34 (ความเห็นผู้ประเมินอิสระ + word-blocklist),
+             FR-13/FR-16 (Trust Score ผู้ขาย), FR-10 (ปุ่มประมูล/ซื้อ เฉพาะสมาชิก active) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เหรียญหลวงพ่อรุ่นแรก ปี 2510 | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สมาชิกใหม่ใช้ฟรี 3 เดือน — <a href="membership.html">ดูแพ็กเกจ</a></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary">สมัครสมาชิก</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container">
+    <p class="small muted mb-3"><a href="index.html">หน้าแรก</a> / เหรียญ / เหรียญหลวงพ่อรุ่นแรก ปี 2510</p>
+
+    <div class="detail-grid">
+      <!-- ซ้าย: รูป + รายละเอียด -->
+      <div>
+        <div class="big-image">🪙</div>
+        <div class="thumb-row">
+          <div>🪙</div><div>🔍</div><div>📐</div><div>📜</div>
+        </div>
+
+        <div class="card card-pad mt-5">
+          <h3>รายละเอียดสินค้า</h3>
+          <p>เหรียญหลวงพ่อรุ่นแรก เนื้อทองแดง ปี 2510 สภาพสวยเดิม ผิวหิ้ง ไม่ผ่านการใช้ มีรอยจากการเก็บรักษาเล็กน้อยตามอายุ พร้อมตลับเดิม</p>
+          <ul class="info-list">
+            <li><span>หมวดหมู่</span><span>เหรียญ</span></li>
+            <li><span>เนื้อ</span><span>ทองแดง</span></li>
+            <li><span>ปีที่สร้าง</span><span>พ.ศ. 2510</span></li>
+            <li><span>สภาพ</span><span>สวยเดิม</span></li>
+          </ul>
+        </div>
+
+        <!-- FR-07 / FR-34: ความเห็นผู้ประเมินอิสระ + disclaimer (ห้ามคำว่ารับประกัน/การันตี/ของแท้ 100%) -->
+        <div class="card card-pad mt-4">
+          <h3>ความเห็นประกอบจากผู้ประเมินอิสระ</h3>
+          <div class="alert alert-warning">
+            <span class="ic">⚖️</span>
+            <div><strong>ข้อจำกัดความรับผิด:</strong> ข้อความด้านล่างเป็น “ความเห็นประกอบจากผู้ประเมินอิสระ” <strong>ไม่ใช่การรับประกันของแพลตฟอร์ม</strong> และไม่ใช่การยืนยันความแท้ โปรดใช้วิจารณญาณก่อนตัดสินใจ (อ้างอิง disclaimer เวอร์ชัน 1.2)</div>
+          </div>
+          <p class="muted small">ผู้ประเมิน: คุณวิชัย ส. (ผู้ประเมินอิสระ ลงทะเบียน #AP-0142) · 10 มิ.ย. 2569</p>
+          <blockquote style="border-left:3px solid var(--color-border);margin:0;padding:8px 16px;color:var(--color-text)">
+            “ลักษณะพิมพ์ เนื้อโลหะ และผิวเหรียญสอดคล้องกับยุคสมัยที่ระบุ มีร่องรอยการเก็บรักษาตามธรรมชาติ เห็นควรให้ผู้สนใจตรวจสอบเพิ่มเติมด้วยตนเอง”
+          </blockquote>
+        </div>
+      </div>
+
+      <!-- ขวา: ราคา / ผู้ขาย / ปุ่ม -->
+      <div>
+        <div class="card card-pad">
+          <h1 style="font-size:22px;margin:0 0 8px;">เหรียญหลวงพ่อรุ่นแรก ปี 2510</h1>
+          <span class="badge badge-featured">⭐ ประกาศโปรโมต</span>
+          <div class="price-box mt-3">฿ 45,000</div>
+          <p class="muted small">ราคาขายตรง (ไม่ใช่ประมูล)</p>
+
+          <hr class="divider">
+
+          <!-- FR-13/FR-16: Trust Score ผู้ขาย -->
+          <div class="row-between">
+            <div>
+              <div class="muted small">ผู้ขาย</div>
+              <strong>somchai_99</strong>
+              <span class="badge badge-verified">✓ Verified</span>
+            </div>
+            <div class="text-center">
+              <div class="muted small">Trust Score</div>
+              <span class="trust">⭐ 96</span>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- FR-10: ปุ่มซื้อ/ติดต่อ เฉพาะสมาชิก active -->
+          <a href="transfer.html" class="btn btn-primary btn-lg btn-block">ติดต่อซื้อ / ปิดดีล</a>
+          <button class="btn btn-outline btn-block mt-2">💬 สอบถามผู้ขาย</button>
+
+          <div class="alert alert-info mt-4">
+            <span class="ic">🔒</span>
+            <div>การซื้อต้องเป็น <strong>สมาชิกที่สถานะใช้งานอยู่</strong> (Trial หรือชำระแล้ว) — <a href="register.html">สมัคร</a> หรือ <a href="login.html">เข้าสู่ระบบ</a></div>
+          </div>
+        </div>
+
+        <!-- FR-06: disclaimer มาตรฐานตัวกลาง -->
+        <div class="alert alert-danger mt-4">
+          <span class="ic">⚠️</span>
+          <div><strong>แพลตฟอร์มเป็นตัวกลางเท่านั้น</strong> ไม่รับประกันความแท้ ไม่รับ/ไม่ถือเงิน การชำระเป็นการ <strong>โอนตรงระหว่างผู้ซื้อกับผู้ขาย</strong> โปรดตรวจสอบสินค้าและคู่ค้าก่อนโอนทุกครั้ง</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน · ไม่รับประกันความแท้ของสินค้า · ความเห็นผู้ประเมินอิสระเป็นเพียงความเห็นประกอบ · เครดิตถอน/โอนเป็นเงินสดไม่ได้
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

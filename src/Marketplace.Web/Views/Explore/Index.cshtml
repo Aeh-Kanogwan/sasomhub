@@ -1,0 +1,151 @@
+@model Marketplace.Web.Models.Catalog.ExploreViewModel
+@{
+    ViewData["Title"] = "เรียกดูการ์ด";
+
+    string RarityLabel(string r) => r?.ToLowerInvariant() switch
+    {
+        "legendary" => "Legendary",
+        "epic" => "Epic",
+        "rare" => "Rare",
+        _ => "Common"
+    };
+
+    bool RarityChecked(string slug) => Model.Filter.Rarities.Contains(slug, StringComparer.OrdinalIgnoreCase);
+    bool SetChecked(string set) => Model.Filter.Sets.Contains(set, StringComparer.OrdinalIgnoreCase);
+    bool GradeChecked(string grade) => Model.Filter.Grades.Contains(grade, StringComparer.OrdinalIgnoreCase);
+    var maxPrice = Model.Filter.MaxPrice ?? 200000m;
+}
+
+@* FR-08: guest browse/search — filter posts back as a GET query (?Query=&Rarities=&Grades=&Sets=&MaxPrice=&Sort=)
+   so it is shareable/bookmarkable and re-bindable to ExploreFilter. The search box + sort live in the same
+   form so a single submit carries the full filter state. id="filterForm" is referenced by the auto-submit script. *@
+<form id="filterForm" method="get" asp-controller="Explore" asp-action="Index">
+<div class="container page-head">
+  <div class="breadcrumb">HOME / EXPLORE</div>
+  <h1>เรียกดูการ์ดทั้งหมด</h1>
+  <div class="search stack-md" style="max-width:560px">
+    <span>🔍</span><input type="search" name="Query" placeholder="ค้นหาชื่อการ์ด, ชุด, ผู้ขาย..." value="@Model.Filter.Query">
+  </div>
+  @* FR-08: guest browse/search only — kept verbatim from prototype. *@
+  <div class="alert alert-info stack-md" style="max-width:560px">ℹ️ ผู้เยี่ยมชม (Guest) ดูและค้นหาได้อย่างเดียว — ต้องเป็นสมาชิก active จึงจะซื้อ/ประมูลได้ (FR-08)</div>
+</div>
+
+<section class="container section">
+  <div class="layout-sidebar">
+    @* Filter sidebar — all inputs carry name= matching ExploreFilter; multi-value checkboxes bind to the list props. *@
+    <aside class="sidebar glass">
+      <div class="filter-group">
+        <h4>ความหายาก (Rarity)</h4>
+        <label class="check"><input type="checkbox" name="Rarities" value="common" @(RarityChecked("common") ? "checked" : "")> <span class="mono" style="color:var(--rarity-common)">COMMON</span></label>
+        <label class="check"><input type="checkbox" name="Rarities" value="rare" @(RarityChecked("rare") ? "checked" : "")> <span class="mono" style="color:var(--rarity-rare)">RARE</span></label>
+        <label class="check"><input type="checkbox" name="Rarities" value="epic" @(RarityChecked("epic") ? "checked" : "")> <span class="mono" style="color:var(--rarity-epic)">EPIC</span></label>
+        <label class="check"><input type="checkbox" name="Rarities" value="legendary" @(RarityChecked("legendary") ? "checked" : "")> <span class="mono" style="color:var(--rarity-legendary)">LEGENDARY</span></label>
+      </div>
+      <div class="filter-group">
+        <h4>เกรด PSA / BGS</h4>
+        <div class="flex wrap gap-sm">
+          @foreach (var grade in new[] { "PSA 10", "PSA 9", "PSA 8", "BGS 9.5" })
+          {
+              <label class="chip @(GradeChecked(grade) ? "active" : "")">
+                <input type="checkbox" name="Grades" value="@grade" @(GradeChecked(grade) ? "checked" : "") style="display:none">@grade
+              </label>
+          }
+        </div>
+      </div>
+      <div class="filter-group">
+        <h4>ราคาไม่เกิน (฿)</h4>
+        <input type="range" class="range" name="MaxPrice" min="0" max="500000" step="1000" value="@maxPrice.ToString("0")"
+               oninput="document.getElementById('priceOut').textContent='฿'+Number(this.value).toLocaleString()">
+        <div class="flex between mono tiny stack-sm muted"><span>฿0</span><span id="priceOut">฿@maxPrice.ToString("N0")</span></div>
+      </div>
+      <div class="filter-group">
+        <h4>ชุดการ์ด</h4>
+        @foreach (var set in new[] { "Pokémon TCG", "Magic: The Gathering", "Yu-Gi-Oh!", "One Piece TCG", "Sports Cards" })
+        {
+            <label class="check"><input type="checkbox" name="Sets" value="@set" @(SetChecked(set) ? "checked" : "")> @set</label>
+        }
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-sm">ใช้ตัวกรอง</button>
+    </aside>
+
+    @* Result grid *@
+    <div>
+      <div class="flex between stack-sm" style="margin-bottom:18px">
+        <span class="mono muted tiny">พบ @Model.TotalCount.ToString("N0") การ์ด</span>
+        @* Sort lives inside #filterForm; changing it auto-submits, preserving the rest of the filter state. *@
+        <select class="select" name="Sort" style="max-width:200px" onchange="document.getElementById('filterForm').submit()">
+          <option value="newest" selected="@(Model.Filter.Sort == "newest")">เรียง: ใหม่ล่าสุด</option>
+          <option value="price_asc" selected="@(Model.Filter.Sort == "price_asc")">ราคาต่ำ→สูง</option>
+          <option value="price_desc" selected="@(Model.Filter.Sort == "price_desc")">ราคาสูง→ต่ำ</option>
+          <option value="rating" selected="@(Model.Filter.Sort == "rating")">เรตติ้งสูงสุด</option>
+        </select>
+      </div>
+      <div class="card-grid">
+        @if (Model.Results.Any())
+        {
+            foreach (var card in Model.Results)
+            {
+                <a asp-controller="Listings" asp-action="Detail" asp-route-id="@card.ProductId" class="tcard r-@card.Rarity.ToLowerInvariant()">
+                  <div class="rarity @card.Rarity.ToLowerInvariant()">@RarityLabel(card.Rarity)</div>
+                  <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">@card.Glyph</div></div>
+                  <div class="card-body">
+                    <div class="card-title">@card.Title</div>
+                    @if (!string.IsNullOrEmpty(card.SetLabel)) { <div class="card-set">@card.SetLabel</div> }
+                    <div class="card-meta">
+                      <span class="price">@(card.Price.HasValue ? $"฿{card.Price.Value:N0}" : "—")</span>
+                      @if (!string.IsNullOrEmpty(card.GradeLabel)) { <span class="grade">@card.GradeLabel</span> }
+                    </div>
+                    @if (!string.IsNullOrEmpty(card.SerialLabel)) { <div class="serial">SERIAL @card.SerialLabel</div> }
+                  </div>
+                </a>
+            }
+        }
+        else
+        {
+            @* TODO: frontend-dev — replace sample cards with Model.Results เมื่อ backend ต่อข้อมูล.
+               ตัวอย่าง 12 ใบ hardcode ตาม prototype (explore.html). *@
+            var sampleCards = new[]
+            {
+                new { t = "Charizard 1st Ed.", set = "Base Set · 1999", r = "legendary", g = "PSA 10", p = "฿128,000", s = "#0042/0050", glyph = "🔥" },
+                new { t = "Pikachu Illustrator", set = "Promo · 1998", r = "epic", g = "PSA 9", p = "฿98,500", s = "#0012/0039", glyph = "⚡" },
+                new { t = "Black Lotus", set = "Alpha · MTG", r = "legendary", g = "BGS 9.5", p = "฿412,000", s = "#0003/1100", glyph = "🌸" },
+                new { t = "Blue-Eyes White Dragon", set = "LOB", r = "epic", g = "PSA 10", p = "฿54,200", s = "#0088/0500", glyph = "🐉" },
+                new { t = "Umbreon VMAX Alt", set = "Evolving Skies", r = "rare", g = "PSA 9", p = "฿42,800", s = "#0210/0999", glyph = "🌙" },
+                new { t = "Mewtwo GX", set = "Shining Legends", r = "rare", g = "PSA 8", p = "฿15,200", s = "#0455/2000", glyph = "🔮" },
+                new { t = "Luffy Gear 5 Leader", set = "OP-05", r = "common", g = "PSA 9", p = "฿8,900", s = "#1204/5000", glyph = "🏴‍☠️" },
+                new { t = "LeBron James Rookie", set = "Topps Chrome", r = "common", g = "BGS 8.5", p = "฿6,400", s = "#0780/3000", glyph = "🏀" },
+                new { t = "Rayquaza VMAX", set = "Evolving Skies", r = "epic", g = "PSA 10", p = "฿38,000", s = "#0099/0800", glyph = "🐲" },
+                new { t = "Dark Magician Girl", set = "MFC", r = "rare", g = "PSA 9", p = "฿22,500", s = "#0345/1500", glyph = "✨" },
+                new { t = "Mox Sapphire", set = "Beta · MTG", r = "legendary", g = "BGS 9", p = "฿156,000", s = "#0005/0900", glyph = "💎" },
+                new { t = "Giannis Prizm Silver", set = "Panini Prizm", r = "common", g = "PSA 9", p = "฿4,800", s = "#1880/4000", glyph = "🏀" }
+            };
+            foreach (var c in sampleCards)
+            {
+                <a asp-controller="Listings" asp-action="Detail" class="tcard r-@c.r">
+                  <div class="rarity @c.r">@RarityLabel(c.r)</div>
+                  <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">@c.glyph</div></div>
+                  <div class="card-body">
+                    <div class="card-title">@c.t</div>
+                    <div class="card-set">@c.set</div>
+                    <div class="card-meta"><span class="price">@c.p</span><span class="grade">@c.g</span></div>
+                    <div class="serial">SERIAL @c.s</div>
+                  </div>
+                </a>
+            }
+        }
+      </div>
+    </div>
+  </div>
+</section>
+</form>
+
+@section Scripts {
+  @* Grade chips are checkboxes styled as chips — keep the .active visual in sync with the hidden checkbox. *@
+  <script>
+    document.querySelectorAll('.filter-group label.chip input[type="checkbox"]').forEach(function (cb) {
+      cb.closest('label.chip').addEventListener('click', function () {
+        setTimeout(function () { cb.closest('label.chip').classList.toggle('active', cb.checked); }, 0);
+      });
+    });
+  </script>
+}

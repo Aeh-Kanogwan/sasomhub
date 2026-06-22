@@ -1,0 +1,105 @@
+@model Marketplace.Web.Models.Trade.TransferViewModel
+@{
+    ViewData["Title"] = "ชำระเงิน (โอนตรงถึงผู้ขาย)";
+
+    var bank = Model.SellerBank;
+    var amountRaw = Model.AgreedAmount.ToString("0");
+    var amountDisplay = Model.AgreedAmount.ToString("#,##0");
+}
+
+<!-- ===== Page head ===== -->
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / ชำระเงิน</div>
+  <h1>ชำระเงิน — <span class="gradient-text">โอนตรงถึงผู้ขาย</span></h1>
+</section>
+
+<!-- ===== No-touch payment danger banner (FR-18) — LEGAL INVARIANT, ห้ามแก้ถ้อยคำ ===== -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-danger" style="font-size:16px; padding:20px 24px">
+    <span style="font-size:24px">🚫</span>
+    <div><strong>แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงิน</strong> — กรุณาโอนเงินตรงเข้าบัญชีผู้ขายเท่านั้น Neon Vault ไม่มีส่วนเกี่ยวข้องกับการรับ-จ่ายเงิน</div>
+  </div>
+</section>
+
+@* FR-18/FR-19: surface the status outcome posted back from MarkTransferred/ConfirmReceipt via TempData. *@
+@{
+    var transferResult = TempData["TransferResult"] as string;
+    var transferMessage = TempData["TransferMessage"] as string;
+}
+@if (!string.IsNullOrEmpty(transferResult) && !string.IsNullOrEmpty(transferMessage))
+{
+    <section class="container" style="margin-bottom:var(--stack-md)">
+      <div class="alert @(transferResult == "ok" ? "alert-info" : "alert-danger")" role="status">
+        <span>@(transferResult == "ok" ? "✅" : "⚠️")</span>
+        <div>@transferMessage</div>
+      </div>
+    </section>
+}
+
+<!-- ===== Order summary ===== -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">ORDER SUMMARY</p><h2 style="font-size:24px">สรุปออเดอร์</h2></div>
+    </div>
+    <div class="spec">
+      <span class="k">การ์ด</span>
+      <span class="v">@Model.ProductTitle@(string.IsNullOrEmpty(Model.GradeLabel) ? "" : " · " + Model.GradeLabel)</span>
+    </div>
+    <div class="spec">
+      <span class="k">ราคา</span>
+      <span class="v mono" style="color:var(--primary-fixed)">฿@amountDisplay</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Seller bank box (FR-18 โอนตรง) — แสดงบัญชีผู้ขายให้โอนตรงเท่านั้น ไม่มี wallet/escrow ===== -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass bank-box" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">SELLER ACCOUNT · FR-18</p><h2 style="font-size:24px">บัญชีผู้ขาย (โอนตรง)</h2></div>
+    </div>
+    <div class="copy-row">
+      <span>ธนาคาร: <strong>@bank.BankName</strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="navigator.clipboard&&navigator.clipboard.writeText('@bank.BankName');alert('คัดลอกแล้ว: @bank.BankName')">คัดลอก</button>
+    </div>
+    <div class="copy-row">
+      <span>เลขบัญชี: <strong>@bank.AccountNumberMasked</strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="navigator.clipboard&&navigator.clipboard.writeText('@bank.AccountNumberMasked');alert('คัดลอกแล้ว: @bank.AccountNumberMasked')">คัดลอก</button>
+    </div>
+    <div class="copy-row">
+      <span>ชื่อบัญชี: <strong>@bank.AccountName</strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="navigator.clipboard&&navigator.clipboard.writeText('@bank.AccountName');alert('คัดลอกแล้ว: @bank.AccountName')">คัดลอก</button>
+    </div>
+    <div class="copy-row" style="border-bottom:none">
+      <span>จำนวน: <strong style="color:var(--primary-fixed)">฿@amountDisplay</strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="navigator.clipboard&&navigator.clipboard.writeText('@amountRaw');alert('คัดลอกแล้ว: @amountRaw')">คัดลอก</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Actions ===== -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="flex gap-md wrap">
+    <!-- FR-18: บันทึกสถานะ Transferred เท่านั้น — ไม่มีการรับ/ตัดเงินในระบบ -->
+    <form asp-action="MarkTransferred" method="post" style="display:inline">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="id" value="@Model.TransactionId" />
+      <button type="submit" class="btn btn-primary btn-lg">✅ ฉันโอนเงินแล้ว</button>
+    </form>
+    <!-- FR-19: ยืนยันรับของ -> เปิดรีวิว + อัปเดต Trust Score -->
+    <form asp-action="ConfirmReceipt" method="post" style="display:inline">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="id" value="@Model.TransactionId" />
+      <button type="submit" class="btn btn-buy btn-lg">📦 ยืนยันได้รับการ์ดแล้ว</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===== Confirm receipt info (FR-19) ===== -->
+<section class="container" style="margin-bottom:var(--stack-lg)">
+  <div class="alert alert-info">
+    <span>ℹ️</span>
+    <div>เมื่อได้รับการ์ดแล้วโปรดกดยืนยันรับของและให้รีวิว เพื่ออัปเดต Trust Score ทั้งสองฝ่าย (FR-19)</div>
+  </div>
+</section>

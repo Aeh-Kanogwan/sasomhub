@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!-- create-listing.html — Neon Vault | ลงขายการ์ด
+     FR map: FR-06 (ลงขายต้องสมาชิก active + disclaimer มาตรฐาน),
+              FR-30 (ใช้เครดิตซื้อ Featured/โปรโมตประกาศ) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Vault — ลงขายการ์ด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== Navbar (shared) ===== -->
+<nav class="navbar">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <span class="logo-mark">◈</span> Neon Vault
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">หน้าแรก</a></li>
+      <li><a href="explore.html">เรียกดูการ์ด</a></li>
+      <li><a href="auction.html">ประมูลสด</a></li>
+      <li><a href="membership.html">สมาชิก</a></li>
+      <li><a href="credits.html">เครดิต</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary btn-sm">สมัครฟรี 3 เดือน</a>
+      <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Page head ===== -->
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / ลงขายการ์ด</div>
+  <h1>ลงขาย<span class="gradient-text">การ์ด</span></h1>
+</section>
+
+<!-- ===== Top notice (FR-06 ต้องเป็นสมาชิก active) ===== -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-info">
+    <span>ℹ️</span>
+    <div>การลงขายต้องเป็นสมาชิกที่ membership active เท่านั้น (FR-06) — <a href="membership.html" style="color:var(--primary-fixed)">ตรวจสอบสถานะสมาชิก</a></div>
+  </div>
+</section>
+
+<!-- ===== Listing form ===== -->
+<section class="section container" style="padding-top:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">LISTING DETAILS</p><h2 style="font-size:24px">รายละเอียดการ์ด</h2></div>
+    </div>
+
+    <!-- รูปภาพ (placeholder คลิกได้) -->
+    <div class="field">
+      <label>รูปการ์ด</label>
+      <div onclick="alert('โหมดสาธิต: อัปโหลดรูปยังไม่เปิดใช้งานใน static prototype')"
+           style="border:2px dashed var(--outline-variant); border-radius:var(--r-md); padding:36px; text-align:center; cursor:pointer; color:var(--on-surface-variant); background:var(--surface-container-lowest)">
+        <div style="font-size:40px; margin-bottom:8px">🖼️</div>
+        <div>คลิกเพื่ออัปโหลดรูป (ลากวางไฟล์ได้)</div>
+        <div class="tiny mono" style="margin-top:6px">PNG / JPG สูงสุด 8MB · แนะนำถ่ายหน้า-หลังและซีล PSA</div>
+      </div>
+    </div>
+
+    <!-- ชื่อการ์ด -->
+    <div class="field">
+      <label>ชื่อการ์ด</label>
+      <input class="input" type="text" placeholder="เช่น Charizard 1st Edition">
+    </div>
+
+    <!-- ชุด/เซ็ต -->
+    <div class="field">
+      <label>ชุด / เซ็ต</label>
+      <input class="input" type="text" placeholder="เช่น Base Set · 1999">
+    </div>
+
+    <div class="flex gap-md wrap">
+      <!-- rarity -->
+      <div class="field" style="flex:1; min-width:200px">
+        <label>ระดับความหายาก (Rarity)</label>
+        <select class="select">
+          <option>Common</option>
+          <option>Rare</option>
+          <option>Epic</option>
+          <option>Legendary</option>
+        </select>
+      </div>
+      <!-- เกรด -->
+      <div class="field" style="flex:1; min-width:200px">
+        <label>เกรด (ความเห็นผู้ประเมินอิสระ)</label>
+        <select class="select">
+          <option>PSA 10</option>
+          <option>PSA 9</option>
+          <option>PSA 8</option>
+          <option>BGS 9.5</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex gap-md wrap">
+      <!-- ซีเรียล -->
+      <div class="field" style="flex:1; min-width:200px">
+        <label>ซีเรียล</label>
+        <input class="input mono" type="text" placeholder="#0042/0050">
+      </div>
+      <!-- ราคา -->
+      <div class="field" style="flex:1; min-width:200px">
+        <label>ราคา (บาท)</label>
+        <input class="input mono" type="text" placeholder="128000">
+      </div>
+    </div>
+
+    <!-- รายละเอียด -->
+    <div class="field">
+      <label>รายละเอียด</label>
+      <textarea class="textarea" placeholder="อธิบายสภาพการ์ด ที่มา ประวัติ และข้อมูลที่ผู้ซื้อควรทราบ"></textarea>
+    </div>
+
+    <!-- Disclaimer มาตรฐาน (เชิงปฏิเสธ) -->
+    <div class="alert alert-warn">
+      <span>⚠️</span>
+      <div>แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ ไม่รับประกัน ไม่การันตี และไม่รับรองความแท้ของสินค้า ผู้ขายรับผิดชอบความถูกต้องของข้อมูลเอง</div>
+    </div>
+
+    <label class="check" style="margin-top:var(--stack-md)">
+      <input type="checkbox">
+      <span>ข้าพเจ้ายืนยันว่าข้อมูลถูกต้องและยอมรับเงื่อนไขข้างต้น</span>
+    </label>
+  </div>
+</section>
+
+<!-- ===== Featured / โปรโมตประกาศ (FR-30) ===== -->
+<section class="section container" style="padding-top:0">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">BOOST · FR-30</p><h2 style="font-size:24px">โปรโมตประกาศ (Featured)</h2></div>
+    </div>
+    <p class="muted" style="margin-bottom:var(--stack-md)">เลือกแพ็กเกจเพื่อดันประกาศของคุณให้เด่นขึ้น (เลือกได้หลายรายการ)</p>
+    <div class="flex gap-sm wrap">
+      <span class="chip" onclick="this.classList.toggle('active')">Featured 7 วัน · 50 เครดิต</span>
+      <span class="chip" onclick="this.classList.toggle('active')">ดันขึ้นบน 3 วัน · 30 เครดิต</span>
+      <span class="chip" onclick="this.classList.toggle('active')">ไฮไลต์สีพิเศษ · 20 เครดิต</span>
+      <span class="chip" onclick="this.classList.toggle('active')">ปักหมุดหน้าหมวด 5 วัน · 80 เครดิต</span>
+    </div>
+    <div class="alert alert-info" style="margin-top:var(--stack-md)">
+      <span>ℹ️</span>
+      <div>ใช้เครดิตในแพลตฟอร์มเท่านั้น (FR-30) — ดูยอดเครดิตที่ <a href="credits.html" style="color:var(--primary-fixed)">credits.html</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Actions ===== -->
+<section class="container" style="margin-bottom:var(--stack-lg)">
+  <div class="flex gap-md wrap">
+    <button class="btn btn-primary btn-lg" onclick="alert('โหมดสาธิต: เผยแพร่ประกาศ (static prototype)')">เผยแพร่ประกาศ</button>
+    <button class="btn btn-ghost btn-lg" onclick="alert('โหมดสาธิต: บันทึกแบบร่างแล้ว')">บันทึกแบบร่าง</button>
+  </div>
+</section>
+
+<!-- ===== Footer (shared) ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a>
+        <p class="muted stack-md" style="max-width:320px">ตลาดกลางการ์ดสะสม — แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ ไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงินในการซื้อขาย</p>
+      </div>
+      <div><h5>สำรวจ</h5><a href="explore.html">เรียกดูการ์ด</a><a href="auction.html">ประมูลสด</a><a href="create-listing.html">ลงขายการ์ด</a></div>
+      <div><h5>บัญชี</h5><a href="membership.html">แพ็กเกจสมาชิก</a><a href="credits.html">กระเป๋าเครดิต</a><a href="profile.html">โปรไฟล์</a></div>
+      <div><h5>ช่วยเหลือ</h5><a href="transfer.html">วิธีโอนตรง</a><a href="#">นโยบาย PDPA</a><a href="#">เงื่อนไขการใช้งาน</a></div>
+    </div>
+    <p class="legal">⚖️ <strong>หมายเหตุทางกฎหมาย:</strong> Neon Vault เป็นแพลตฟอร์มตัวกลางสำหรับประกาศซื้อขายการ์ดสะสมเท่านั้น เราไม่รับประกัน ไม่การันตี และไม่รับรองความแท้ของสินค้า ความเห็นจากผู้ประเมินเป็นความเห็นประกอบของบุคคลภายนอกอิสระ การชำระเงินเป็นการโอนตรงระหว่างผู้ซื้อ-ผู้ขาย แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงิน · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้ · นี่คือ static prototype สำหรับสาธิต UI เท่านั้น</p>
+  </div>
+</footer>
+
+<div class="ribbon">● STATIC PROTOTYPE</div>
+
+</body>
+</html>

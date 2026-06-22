@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<!-- explore.html — เรียกดู/ค้นหาการ์ด | FR-08 (Guest ค้นหา/เรียกดู Active) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เรียกดูการ์ด — Neon Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="sym">CHARIZARD-1ST</span> <span class="mono">฿128,000</span> <span class="up">▲ +4.2%</span></span>
+    <span class="ticker-item"><span class="sym">PIKACHU-ILLUS</span> <span class="mono">฿98,500</span> <span class="down">▼ -1.1%</span></span>
+    <span class="ticker-item"><span class="sym">BLACK-LOTUS</span> <span class="mono">฿412,000</span> <span class="up">▲ +8.7%</span></span>
+    <span class="ticker-item"><span class="sym">UMBREON-VMAX</span> <span class="mono">฿42,800</span> <span class="down">▼ -3.4%</span></span>
+    <span class="ticker-item"><span class="sym">LUGIA-NEO</span> <span class="mono">฿67,000</span> <span class="up">▲ +5.6%</span></span>
+    <span class="ticker-item"><span class="sym">CHARIZARD-1ST</span> <span class="mono">฿128,000</span> <span class="up">▲ +4.2%</span></span>
+    <span class="ticker-item"><span class="sym">PIKACHU-ILLUS</span> <span class="mono">฿98,500</span> <span class="down">▼ -1.1%</span></span>
+    <span class="ticker-item"><span class="sym">BLACK-LOTUS</span> <span class="mono">฿412,000</span> <span class="up">▲ +8.7%</span></span>
+    <span class="ticker-item"><span class="sym">UMBREON-VMAX</span> <span class="mono">฿42,800</span> <span class="down">▼ -3.4%</span></span>
+    <span class="ticker-item"><span class="sym">LUGIA-NEO</span> <span class="mono">฿67,000</span> <span class="up">▲ +5.6%</span></span>
+  </div>
+</div>
+
+<nav class="navbar">
+  <div class="container">
+    <a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">หน้าแรก</a></li>
+      <li><a href="explore.html" class="active">เรียกดูการ์ด</a></li>
+      <li><a href="auction.html">ประมูลสด</a></li>
+      <li><a href="membership.html">สมาชิก</a></li>
+      <li><a href="credits.html">เครดิต</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary btn-sm">สมัครฟรี 3 เดือน</a>
+      <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container page-head">
+  <div class="breadcrumb">HOME / EXPLORE</div>
+  <h1>เรียกดูการ์ดทั้งหมด</h1>
+  <div class="search stack-md" style="max-width:560px">
+    <span>🔍</span><input placeholder="ค้นหาชื่อการ์ด, ชุด, ผู้ขาย...">
+  </div>
+  <div class="alert alert-info stack-md" style="max-width:560px">ℹ️ ผู้เยี่ยมชม (Guest) ดูและค้นหาได้อย่างเดียว — ต้องเป็นสมาชิก active จึงจะซื้อ/ประมูลได้ (FR-08)</div>
+</div>
+
+<section class="container section">
+  <div class="layout-sidebar">
+    <!-- Filter sidebar -->
+    <aside class="sidebar glass">
+      <div class="filter-group">
+        <h4>ความหายาก (Rarity)</h4>
+        <label class="check"><input type="checkbox"> <span class="mono" style="color:var(--rarity-common)">COMMON</span></label>
+        <label class="check"><input type="checkbox"> <span class="mono" style="color:var(--rarity-rare)">RARE</span></label>
+        <label class="check"><input type="checkbox"> <span class="mono" style="color:var(--rarity-epic)">EPIC</span></label>
+        <label class="check"><input type="checkbox"> <span class="mono" style="color:var(--rarity-legendary)">LEGENDARY</span></label>
+      </div>
+      <div class="filter-group">
+        <h4>เกรด PSA / BGS</h4>
+        <div class="flex wrap gap-sm">
+          <span class="chip">PSA 10</span><span class="chip">PSA 9</span><span class="chip">PSA 8</span><span class="chip">BGS 9.5</span>
+        </div>
+      </div>
+      <div class="filter-group">
+        <h4>ช่วงราคา (฿)</h4>
+        <input type="range" class="range" min="0" max="500000" value="200000">
+        <div class="flex between mono tiny stack-sm muted"><span>฿0</span><span>฿500,000</span></div>
+      </div>
+      <div class="filter-group">
+        <h4>ชุดการ์ด</h4>
+        <label class="check"><input type="checkbox"> Pokémon TCG</label>
+        <label class="check"><input type="checkbox"> Magic: The Gathering</label>
+        <label class="check"><input type="checkbox"> Yu-Gi-Oh!</label>
+        <label class="check"><input type="checkbox"> One Piece TCG</label>
+        <label class="check"><input type="checkbox"> Sports Cards</label>
+      </div>
+      <button class="btn btn-primary btn-block btn-sm">ใช้ตัวกรอง</button>
+    </aside>
+
+    <!-- Result grid -->
+    <div>
+      <div class="flex between stack-sm" style="margin-bottom:18px">
+        <span class="mono muted tiny">พบ 24,800 การ์ด</span>
+        <select class="select" style="max-width:200px"><option>เรียง: ใหม่ล่าสุด</option><option>ราคาต่ำ→สูง</option><option>ราคาสูง→ต่ำ</option><option>เรตติ้งสูงสุด</option></select>
+      </div>
+      <div class="card-grid" id="gallery"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a>
+        <p class="muted stack-md" style="max-width:320px">ตลาดกลางการ์ดสะสม — แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ ไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงินในการซื้อขาย</p>
+      </div>
+      <div><h5>สำรวจ</h5><a href="explore.html">เรียกดูการ์ด</a><a href="auction.html">ประมูลสด</a><a href="create-listing.html">ลงขายการ์ด</a></div>
+      <div><h5>บัญชี</h5><a href="membership.html">แพ็กเกจสมาชิก</a><a href="credits.html">กระเป๋าเครดิต</a><a href="profile.html">โปรไฟล์</a></div>
+      <div><h5>ช่วยเหลือ</h5><a href="transfer.html">วิธีโอนตรง</a><a href="#">นโยบาย PDPA</a><a href="#">เงื่อนไขการใช้งาน</a></div>
+    </div>
+    <p class="legal">⚖️ <strong>หมายเหตุทางกฎหมาย:</strong> Neon Vault เป็นแพลตฟอร์มตัวกลางเท่านั้น ไม่รับประกัน/การันตี/รับรองความแท้ การชำระเงินเป็นการโอนตรงระหว่างผู้ใช้ แพลตฟอร์มไม่รับ ไม่ถือ ไม่เป็นตัวกลางทางการเงิน · นี่คือ static prototype สำหรับสาธิต UI เท่านั้น</p>
+  </div>
+</footer>
+
+<div class="ribbon">● STATIC PROTOTYPE</div>
+
+<script>
+const cards = [
+  {t:'Charizard 1st Ed.', set:'Base Set · 1999', r:'legendary', g:'PSA 10', p:'฿128,000', s:'#0042/0050', glyph:'🔥'},
+  {t:'Pikachu Illustrator', set:'Promo · 1998', r:'epic', g:'PSA 9', p:'฿98,500', s:'#0012/0039', glyph:'⚡'},
+  {t:'Black Lotus', set:'Alpha · MTG', r:'legendary', g:'BGS 9.5', p:'฿412,000', s:'#0003/1100', glyph:'🌸'},
+  {t:'Blue-Eyes White Dragon', set:'LOB', r:'epic', g:'PSA 10', p:'฿54,200', s:'#0088/0500', glyph:'🐉'},
+  {t:'Umbreon VMAX Alt', set:'Evolving Skies', r:'rare', g:'PSA 9', p:'฿42,800', s:'#0210/0999', glyph:'🌙'},
+  {t:'Mewtwo GX', set:'Shining Legends', r:'rare', g:'PSA 8', p:'฿15,200', s:'#0455/2000', glyph:'🔮'},
+  {t:'Luffy Gear 5 Leader', set:'OP-05', r:'common', g:'PSA 9', p:'฿8,900', s:'#1204/5000', glyph:'🏴‍☠️'},
+  {t:'LeBron James Rookie', set:'Topps Chrome', r:'common', g:'BGS 8.5', p:'฿6,400', s:'#0780/3000', glyph:'🏀'},
+  {t:'Rayquaza VMAX', set:'Evolving Skies', r:'epic', g:'PSA 10', p:'฿38,000', s:'#0099/0800', glyph:'🐲'},
+  {t:'Dark Magician Girl', set:'MFC', r:'rare', g:'PSA 9', p:'฿22,500', s:'#0345/1500', glyph:'✨'},
+  {t:'Mox Sapphire', set:'Beta · MTG', r:'legendary', g:'BGS 9', p:'฿156,000', s:'#0005/0900', glyph:'💎'},
+  {t:'Giannis Prizm Silver', set:'Panini Prizm', r:'common', g:'PSA 9', p:'฿4,800', s:'#1880/4000', glyph:'🏀'},
+];
+document.getElementById('gallery').innerHTML = cards.map(c => `
+  <a href="listing-detail.html" class="tcard r-${c.r}">
+    <div class="rarity ${c.r}">${c.r}</div>
+    <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">${c.glyph}</div></div>
+    <div class="card-body">
+      <div class="card-title">${c.t}</div>
+      <div class="card-set">${c.set}</div>
+      <div class="card-meta"><span class="price">${c.p}</span><span class="grade">${c.g}</span></div>
+      <div class="serial">SERIAL ${c.s}</div>
+    </div>
+  </a>`).join('');
+</script>
+</body>
+</html>

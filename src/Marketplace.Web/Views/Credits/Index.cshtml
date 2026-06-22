@@ -1,0 +1,105 @@
+@model Marketplace.Web.Models.Credits.CreditsViewModel
+@{
+    ViewData["Title"] = "กระเป๋าเครดิต";
+
+    // Format a signed ledger amount: +200 / -50, with up/down CSS class for color.
+    (string css, string text) FormatAmount(decimal amount)
+    {
+        var cls = amount < 0 ? "down" : "up";
+        var sign = amount < 0 ? "-" : "+";
+        return (cls, $"{sign}{Math.Abs(amount):N0}");
+    }
+}
+
+@* ===== Page head ===== *@
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / กระเป๋าเครดิต</div>
+  <h1>กระเป๋า<span class="gradient-text">เครดิต</span></h1>
+</section>
+
+@* ===== Balance hero ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="balance-hero glass">
+    <div>
+      <p class="eyebrow">ยอดคงเหลือ</p>
+      <div class="amount mono gradient-text">@Model.Balance.ToString("N0")</div>
+      <p class="muted mono tiny">เครดิต · ใช้ในแพลตฟอร์มเท่านั้น</p>
+    </div>
+    <div class="flex gap-md wrap" style="flex-direction:column; align-items:flex-end">
+      <div class="flex gap-md wrap">
+        @* FR-28 (single-level): คัดลอกลิงก์เชิญเพื่อนจาก Model.ReferralCode. site.js ผูก [data-copy] ให้คัดลอกค่าใน attribute. *@
+        @if (!string.IsNullOrEmpty(Model.ReferralCode))
+        {
+          <button type="button" class="btn btn-secondary" data-copy="@Model.ReferralCode">เชิญเพื่อน (+เครดิต)</button>
+        }
+        else
+        {
+          @* ยังไม่มีรหัสแนะนำ (เช่น ยังไม่ผ่านการตรวจ) — ปิดปุ่มไว้ก่อน *@
+          <button type="button" class="btn btn-secondary" disabled title="รหัสแนะนำของคุณกำลังเตรียมพร้อม">เชิญเพื่อน (+เครดิต)</button>
+        }
+        <a asp-controller="Listings" asp-action="Create" class="btn btn-primary">ใช้โปรโมตประกาศ</a>
+      </div>
+      @if (!string.IsNullOrEmpty(Model.ReferralCode))
+      {
+        <p class="muted mono tiny" style="margin:0">รหัสแนะนำของคุณ: <span class="gradient-text">@Model.ReferralCode</span></p>
+      }
+    </div>
+  </div>
+</section>
+
+@* ===== Non-cashable warning (FR-28/29 — ห้ามลบ legal text) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-warn">
+    <span>⚠️</span>
+    <div>เครดิตใช้ได้เฉพาะบริการในแพลตฟอร์มเท่านั้น (ค่าสมาชิก/ค่าโปรโมต) — ถอน แลกเป็นเงินสด หรือโอนให้ผู้อื่นไม่ได้</div>
+  </div>
+</section>
+
+@* ===== Ledger (FR-29 Credit Ledger โปร่งใส) ===== *@
+<section class="section container" style="padding-top:0">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">CREDIT LEDGER · FR-29</p><h2 style="font-size:24px">ประวัติเครดิต</h2></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="mono-table">
+        <thead>
+          <tr>
+            <th>วันที่</th>
+            <th>รายการ</th>
+            <th>จำนวน</th>
+            <th>คงเหลือ</th>
+            <th>หมดอายุ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (Model.Ledger.Any())
+          {
+              foreach (var row in Model.Ledger)
+              {
+                  var amt = FormatAmount(row.Amount);
+                  <tr>
+                    <td>@row.Date.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                    <td>@row.Description</td>
+                    <td class="@amt.css">@amt.text</td>
+                    <td>@row.BalanceAfter.ToString("N0")</td>
+                    <td>@(row.ExpiresAtUtc.HasValue ? row.ExpiresAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd") : "—")</td>
+                  </tr>
+              }
+          }
+          else
+          {
+              @* TODO: backend-dev — replace sample rows with Model.Ledger (CreditLedgerRow, append-only FR-37).
+                 ตัวอย่างตาม prototype (credits.html) เพื่อให้เห็นดีไซน์ระหว่างยังไม่มีข้อมูลจริง. *@
+              <tr><td>2026-06-10</td><td>referral reward (เพื่อนสมัครสำเร็จ)</td><td class="up">+200</td><td>1,250</td><td>2027-06-10</td></tr>
+              <tr><td>2026-05-28</td><td>ใช้โปรโมต listing (Featured 7 วัน)</td><td class="down">-50</td><td>1,050</td><td>—</td></tr>
+              <tr><td>2026-05-15</td><td>referral reward (เพื่อนสมัครสำเร็จ)</td><td class="up">+200</td><td>1,100</td><td>2027-05-15</td></tr>
+              <tr><td>2026-05-01</td><td>เครดิตหมดอายุ (reason=expired)</td><td class="down">-100</td><td>900</td><td>หมดอายุแล้ว</td></tr>
+              <tr><td>2026-03-17</td><td>โบนัสสมัคร (welcome bonus)</td><td class="up">+1,000</td><td>1,000</td><td>2027-03-17</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="muted tiny" style="margin-top:var(--stack-md)">เครดิตจากการแนะนำเป็นแบบชั้นเดียว (single-level) เท่านั้น — ไม่มีการจ่ายต่อหลายชั้น</p>
+  </div>
+</section>

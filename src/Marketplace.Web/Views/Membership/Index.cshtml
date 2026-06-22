@@ -1,0 +1,197 @@
+@model Marketplace.Web.Models.Membership.MembershipViewModel
+@{
+    ViewData["Title"] = "แพ็กเกจสมาชิก";
+
+    var isAuth = User?.Identity?.IsAuthenticated ?? false;
+
+    // FR-27: current membership state -> drives whether plan CTAs renew/upgrade or sign-up.
+    // NOTE (frontend-dev -> lead-dev): MembershipViewModel ยังไม่มี MembershipId ซึ่งจำเป็นต่อ
+    // POST Renew(membershipId,..) / Upgrade(membershipId,..). ปุ่มด้านล่าง bind asp-route-membershipId
+    // = Model.MembershipId เมื่อ field ถูกเพิ่ม (ตอนนี้ส่ง empty -> ModelBinder ได้ Guid.Empty).
+    string CtaLabel(Marketplace.Web.Models.Membership.MembershipPlanOption p)
+    {
+        if (!isAuth) return $"สมัครและทดลองฟรี · {p.DisplayName}";
+        if (Model.CurrentTierId.HasValue && Model.CurrentTierId.Value == p.MembershipTierId)
+            return Model.CurrentStatus == MembershipStatus.Active ? "แพ็กเกจปัจจุบัน · ต่ออายุ" : "ต่ออายุแพ็กเกจนี้";
+        if (Model.CurrentTierId.HasValue && p.MembershipTierId > Model.CurrentTierId.Value)
+            return $"อัปเกรดเป็น {p.DisplayName}";
+        return $"เปลี่ยนเป็น {p.DisplayName}";
+    }
+}
+
+@* ===== Page head (FR-27: trial 3 เดือน + แจ้งเตือน 14/3/1) ===== *@
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / สมาชิก</div>
+    <p class="eyebrow">◈ MEMBERSHIP</p>
+    <h1>แพ็กเกจสมาชิก</h1>
+    <p class="muted stack-md" style="max-width:620px">ทุกแพ็กเกจ <span class="gradient-text">ทดลองฟรี 3 เดือน</span> นับจากวันสมัคร — เปิดเผยราคาชัดเจน ไม่ตัดเงินเงียบ เราแจ้งเตือนล่วงหน้า 14/3/1 วันก่อนหมดอายุ</p>
+  </div>
+</div>
+
+@* ===== Latest invoice status banner (Flow B: pay / รอตรวจ / Paid) ===== *@
+@if (isAuth && Model.LatestInvoice is not null)
+{
+  var inv = Model.LatestInvoice;
+  <div class="container">
+    @if (inv.Status == FeeInvoiceStatus.Paid)
+    {
+      <div class="alert alert-info stack-md"><span>✅</span><span>ใบแจ้งหนี้ค่าสมาชิกล่าสุด (฿@inv.Amount.ToString("N2")) ชำระเรียบร้อยแล้ว</span></div>
+    }
+    else if (inv.Status == FeeInvoiceStatus.Issued && inv.HasPendingSlip)
+    {
+      <div class="alert alert-info stack-md">
+        <span>⏳</span>
+        <span>สลิปค่าสมาชิก (฿@inv.Amount.ToString("N2")) อยู่ระหว่างรอตรวจสอบ
+          <a asp-action="Pay" asp-route-invoiceId="@inv.FeeInvoiceId">ดูสถานะ</a></span>
+      </div>
+    }
+    else if (inv.Status == FeeInvoiceStatus.Issued)
+    {
+      <div class="alert alert-info stack-md">
+        <span>💸</span>
+        <span>คุณมีใบแจ้งหนี้ค่าสมาชิกรอชำระ ฿@inv.Amount.ToString("N2")
+          <a asp-action="Pay" asp-route-invoiceId="@inv.FeeInvoiceId" class="btn btn-buy btn-sm" style="margin-left:10px">โอน + อัปสลิป</a></span>
+      </div>
+    }
+  </div>
+}
+
+@* ===== Plan grid (FR-27) ===== *@
+<section class="section container">
+  <div class="plan-grid">
+    @if (Model.Plans.Any())
+    {
+        foreach (var plan in Model.Plans)
+        {
+            var isCurrent = isAuth && Model.CurrentTierId.HasValue && Model.CurrentTierId.Value == plan.MembershipTierId;
+            var planClass = plan.IsFeatured ? "plan glass featured" : "plan glass";
+            if (isCurrent) { planClass += " current"; }
+            var btnClass = plan.IsFeatured ? "btn btn-buy btn-block" : "btn btn-primary btn-block";
+            <div class="@planClass">
+              @if (isCurrent)
+              {
+                <span class="badge badge-active">แพ็กเกจปัจจุบัน</span>
+              }
+              else
+              {
+                <span class="badge badge-trial">ฟรี 3 เดือน</span>
+              }
+              <h3>@plan.DisplayName</h3>
+              <div class="amount">฿@plan.AnnualPriceTHB.ToString("N0")<small>/ปี</small></div>
+              <ul class="feat">
+                @foreach (var feat in plan.Features)
+                {
+                  <li>✓ @feat</li>
+                }
+              </ul>
+              @if (!isAuth)
+              {
+                @* Guest: เริ่มที่หน้าสมัคร (ทดลองฟรี 3 เดือน, FR-27) *@
+                <a asp-controller="Account" asp-action="Register" class="@btnClass">@CtaLabel(plan)</a>
+              }
+              else if (isCurrent)
+              {
+                @* FR-27: ต่ออายุแพ็กเกจปัจจุบัน -> POST Renew(membershipId, autoRenew) *@
+                <form asp-controller="Membership" asp-action="Renew" method="post">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="membershipId" value="@Model.MembershipId" />
+                  <input type="hidden" name="autoRenew" value="@Model.AutoRenew.ToString().ToLowerInvariant()" />
+                  <button type="submit" class="@btnClass">@CtaLabel(plan)</button>
+                </form>
+              }
+              else
+              {
+                @* FR-05: เปลี่ยน/อัปเกรดระดับ -> POST Upgrade(membershipId, newTierId) *@
+                <form asp-controller="Membership" asp-action="Upgrade" method="post">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="membershipId" value="@Model.MembershipId" />
+                  <input type="hidden" name="newTierId" value="@plan.MembershipTierId" />
+                  <button type="submit" class="@btnClass">@CtaLabel(plan)</button>
+                </form>
+              }
+            </div>
+        }
+    }
+    else
+    {
+        @* TODO: backend-dev — replace these 3 hardcoded plans with Model.Plans (จาก MembershipTiers + ConfigVersions, FR-35).
+           ราคา/ฟีเจอร์ตาม prototype (membership.html) เพื่อให้เห็นดีไซน์ระหว่างยังไม่มีข้อมูลจริง. *@
+
+        @* Normal *@
+        <div class="plan glass">
+          <span class="badge badge-trial">ฟรี 3 เดือน</span>
+          <h3>Normal</h3>
+          <div class="amount">฿1,000<small>/ปี</small></div>
+          <ul class="feat">
+            <li>✓ ลงขายการ์ดได้</li>
+            <li>✓ เข้าร่วมประมูลสดได้</li>
+            <li>✓ ดูประวัติราคาแบบเรียลไทม์</li>
+            <li>✓ กระเป๋าเครดิตพื้นฐาน</li>
+          </ul>
+          <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-block">อัพเกรดเป็น Normal</a>
+        </div>
+
+        @* Verified *@
+        <div class="plan glass">
+          <span class="badge badge-trial">ฟรี 3 เดือน</span>
+          <h3>Verified</h3>
+          <div class="amount">฿1,500<small>/ปี</small></div>
+          <ul class="feat">
+            <li>✓ ทุกสิทธิ์ของ Normal</li>
+            <li>✓ ยืนยันตัวตน e-KYC ผ่าน NDID</li>
+            <li>✓ ป้าย Verified ข้างชื่อโปรไฟล์</li>
+            <li>✓ ลงการ์ดมูลค่าสูงได้</li>
+          </ul>
+          <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-block">อัพเกรดเป็น Verified</a>
+        </div>
+
+        @* Premium (featured) *@
+        <div class="plan glass featured">
+          <span class="badge badge-trial">ฟรี 3 เดือน</span>
+          <h3>Premium</h3>
+          <div class="amount">฿2,000<small>/ปี</small></div>
+          <ul class="feat">
+            <li>✓ ทุกสิทธิ์ของ Verified</li>
+            <li>✓ โปรโมต listing ขึ้นหน้าแรก</li>
+            <li>✓ ลดค่าธรรมเนียมการขาย</li>
+            <li>✓ การ์ดวิเคราะห์ราคาเชิงลึก</li>
+          </ul>
+          <a asp-controller="Account" asp-action="Register" class="btn btn-buy btn-block">อัพเกรดเป็น Premium</a>
+        </div>
+    }
+  </div>
+
+  @* ===== Auto-renew toggle (FR-32) ===== *@
+  <div class="glass stack-lg" style="padding:24px; display:flex; align-items:center; justify-content:space-between; gap:var(--stack-md); flex-wrap:wrap">
+    <div style="display:flex; align-items:center; gap:14px">
+      @* site.js toggles the class named by data-toggle on click *@
+      <div class="toggle @(Model.AutoRenew ? "on" : "")" data-toggle="on"></div>
+      <div>
+        <div style="font-family:var(--font-display); font-weight:700">ต่ออายุอัตโนมัติรายปี</div>
+        <p class="muted tiny stack-sm">ระบบจะแจ้งเตือนก่อนหมดอายุ 14/3/1 วัน และตัดเงินเฉพาะเมื่อแจ้งครบแล้ว (FR-32)</p>
+      </div>
+    </div>
+    @if (isAuth && Model.CurrentStatus.HasValue)
+    {
+      @* บันทึกค่าเปิด/ปิด auto-renew -> POST Renew(membershipId, autoRenew=สลับค่าเดิม).
+         site.js สลับคลาส .on บน .toggle เพื่อ preview; การกดปุ่มนี้บันทึกค่าใหม่จริง. *@
+      <form asp-controller="Membership" asp-action="Renew" method="post" style="margin:0">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="membershipId" value="@Model.MembershipId" />
+        <input type="hidden" name="autoRenew" value="@((!Model.AutoRenew).ToString().ToLowerInvariant())" />
+        <button type="submit" class="btn btn-ghost btn-sm">@(Model.AutoRenew ? "ปิดต่ออายุอัตโนมัติ" : "เปิดต่ออายุอัตโนมัติ")</button>
+      </form>
+    }
+    else
+    {
+      <span class="chip">ปิดได้ทุกเมื่อ</span>
+    }
+  </div>
+
+  @* ===== No-touch note ===== *@
+  <div class="alert alert-info stack-lg">
+    <span>ℹ️</span>
+    <span>ค่าสมาชิกเป็นรายได้ของแพลตฟอร์มและแยกต่างหากจาก flow การซื้อขายการ์ด — แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงินในการซื้อขายระหว่างผู้ใช้</span>
+  </div>
+</section>

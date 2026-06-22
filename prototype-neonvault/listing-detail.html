@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<!-- listing-detail.html — รายละเอียดการ์ดเดี่ยว
+     FR map: FR-07/FR-34 (ความเห็นผู้ประเมินอิสระ + disclaimer, ห้ามคำรับประกัน), FR-10/FR-18 (ซื้อต้องสมาชิก active), FR-16 (Trust Score ผู้ขาย), ราคาประวัติ mono -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charizard 1st Edition — Neon Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">หน้าแรก</a></li>
+      <li><a href="explore.html" class="active">เรียกดูการ์ด</a></li>
+      <li><a href="auction.html">ประมูลสด</a></li>
+      <li><a href="membership.html">สมาชิก</a></li>
+      <li><a href="credits.html">เครดิต</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary btn-sm">สมัครฟรี 3 เดือน</a>
+      <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container page-head">
+  <div class="breadcrumb">HOME / EXPLORE / POKÉMON / CHARIZARD 1ST ED.</div>
+</div>
+
+<section class="container section" style="padding-top:8px">
+  <div class="detail-grid">
+    <!-- Big card art + refraction -->
+    <div>
+      <div class="detail-art tcard r-legendary" style="transform:none">
+        <div class="rarity legendary">Legendary</div>
+        <div class="card-art" style="aspect-ratio:3/4"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph" style="font-size:120px">🔥</div></div>
+      </div>
+      <div class="flex gap-sm stack-md">
+        <div class="glass" style="padding:10px;flex:1;text-align:center"><div class="card-art" style="aspect-ratio:1;border-radius:8px"><div class="art-fill"></div><div class="art-glyph" style="font-size:28px">🔥</div></div></div>
+        <div class="glass" style="padding:10px;flex:1;text-align:center"><div class="card-art" style="aspect-ratio:1;border-radius:8px"><div class="art-fill"></div><div class="art-glyph" style="font-size:28px">↩️</div></div></div>
+        <div class="glass" style="padding:10px;flex:1;text-align:center"><div class="card-art" style="aspect-ratio:1;border-radius:8px"><div class="art-fill"></div><div class="art-glyph" style="font-size:28px">🔍</div></div></div>
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div>
+      <div class="flex gap-sm wrap"><span class="rarity legendary" style="position:static">Legendary</span> <span class="grade">PSA 10 · GEM MINT</span></div>
+      <h1 style="font-size:36px;margin-top:14px">Charizard 1st Edition</h1>
+      <p class="muted">Pokémon Base Set · Holofoil · 1999 · ภาษาอังกฤษ</p>
+
+      <div class="glass" style="padding:18px;margin-top:20px">
+        <div class="spec"><span class="k">ราคาตั้งขาย</span><span class="price" style="font-size:28px">฿128,000</span></div>
+        <div class="spec"><span class="k">เกรด</span><span class="v">PSA 10 (Cert #82910442)</span></div>
+        <div class="spec"><span class="k">ซีเรียล</span><span class="v">0042 / 0050</span></div>
+        <div class="spec"><span class="k">สภาพ</span><span class="v">GEM MINT · Centered</span></div>
+        <div class="spec"><span class="k">ปีที่ผลิต</span><span class="v">1999</span></div>
+      </div>
+
+      <div class="flex gap-md stack-md">
+        <a href="transfer.html" class="btn btn-buy btn-lg btn-block">🛒 ซื้อทันที (สมาชิก active)</a>
+        <a href="auction.html" class="btn btn-secondary btn-lg btn-block">⚡ เสนอราคา</a>
+      </div>
+      <div class="alert alert-info stack-md">ℹ️ การซื้อ/เสนอราคาสงวนสำหรับสมาชิกที่ membership ยัง active เท่านั้น (FR-10) — <a href="membership.html" style="color:var(--primary-fixed)">ดูแพ็กเกจ</a></div>
+
+      <!-- Seller -->
+      <div class="glass stack-md" style="padding:18px">
+        <div class="seller">
+          <div class="avatar">KV</div>
+          <div style="flex:1">
+            <div class="flex center gap-sm"><strong>KanoVault</strong> <span class="badge badge-verified">✓ Verified</span></div>
+            <div class="tiny muted mono">Trust Score <span class="trust">96</span> · Collector Lv.28 · ดีลสำเร็จ 340 รายการ</div>
+          </div>
+          <a href="profile.html" class="btn btn-ghost btn-sm">ดูโปรไฟล์</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price history (mono chart + table) FR -->
+  <div class="stack-lg">
+    <div class="section-head"><div><p class="eyebrow">MARKET DATA</p><h2 style="font-size:26px">ประวัติราคา</h2></div></div>
+    <div class="glass" style="padding:24px">
+      <div class="chart">
+        <div class="bar" style="height:40%"></div><div class="bar" style="height:52%"></div><div class="bar" style="height:48%"></div>
+        <div class="bar" style="height:65%"></div><div class="bar" style="height:60%"></div><div class="bar" style="height:78%"></div>
+        <div class="bar" style="height:72%"></div><div class="bar" style="height:88%"></div><div class="bar" style="height:95%"></div>
+        <div class="bar" style="height:84%"></div><div class="bar" style="height:100%"></div>
+      </div>
+      <table class="mono-table stack-md">
+        <thead><tr><th>วันที่</th><th>เกรด</th><th>ราคาขาย</th><th>เปลี่ยนแปลง</th></tr></thead>
+        <tbody>
+          <tr><td>2026-06-10</td><td>PSA 10</td><td>฿128,000</td><td class="up">▲ +4.2%</td></tr>
+          <tr><td>2026-05-22</td><td>PSA 10</td><td>฿122,800</td><td class="up">▲ +1.8%</td></tr>
+          <tr><td>2026-04-30</td><td>PSA 9</td><td>฿98,500</td><td class="down">▼ -2.1%</td></tr>
+          <tr><td>2026-03-15</td><td>PSA 10</td><td>฿120,600</td><td class="up">▲ +6.0%</td></tr>
+          <tr><td>2026-02-08</td><td>PSA 10</td><td>฿113,800</td><td class="up">▲ +3.3%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Independent appraiser opinion (FR-07 / FR-34) -->
+  <div class="stack-lg">
+    <div class="section-head"><div><p class="eyebrow">INDEPENDENT OPINION</p><h2 style="font-size:26px">ความเห็นประกอบจากผู้ประเมินอิสระ</h2></div></div>
+    <div class="glass" style="padding:24px">
+      <div class="seller" style="margin-bottom:14px">
+        <div class="avatar" style="background:linear-gradient(135deg,var(--secondary-container),var(--primary-container))">AP</div>
+        <div>
+          <strong>คุณ อภิชาติ ป. — ผู้ประเมินอิสระ (บุคคลภายนอก)</strong>
+          <div class="tiny muted mono">บันทึกเมื่อ 2026-06-09 · disclaimer v2.1</div>
+        </div>
+      </div>
+      <p style="line-height:1.7">"การ์ดอยู่ในสภาพดีมาก มุมคม โฮโลกราฟิกชัด การจัดวาง (centering) อยู่ในเกณฑ์สูง สอดคล้องกับเรตติ้ง PSA 10 ที่ได้รับ ทั้งนี้เป็นการสังเกตด้วยสายตาและประสบการณ์ส่วนบุคคล ผู้สนใจควรตรวจสอบเพิ่มเติมด้วยตนเอง"</p>
+      <div class="disclaimer stack-md">
+        ⚠️ นี่คือ <strong>ความเห็นประกอบจากผู้ประเมินอิสระ ซึ่งเป็นบุคคลภายนอก ไม่ใช่การรับรองหรือคำยืนยันใด ๆ ของแพลตฟอร์ม</strong> Neon Vault ไม่รับรองและไม่รับผิดชอบต่อความถูกต้องของความเห็นดังกล่าว ผู้ซื้อควรใช้วิจารณญาณและตรวจสอบสินค้าด้วยตนเองก่อนตัดสินใจ
+      </div>
+    </div>
+  </div>
+
+  <!-- warn-on-deal demo (FR-17) -->
+  <div class="alert alert-warn stack-lg">⚠️ <div><strong>การแจ้งเตือนคู่ธุรกรรม (ตัวอย่าง):</strong> หากคู่ค้าของคุณเคยถูกระงับเนื่องจากละเมิดข้อกำหนด ระบบจะแสดงคำเตือนด้วยถ้อยคำกลางเฉพาะแก่คุณก่อนตกลงดีล (ไม่เปิดเผยต่อสาธารณะ) — กรณีนี้ผู้ขายมีสถานะปกติ</div></div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div><a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a><p class="muted stack-md" style="max-width:320px">ตลาดกลางการ์ดสะสม — แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ</p></div>
+      <div><h5>สำรวจ</h5><a href="explore.html">เรียกดูการ์ด</a><a href="auction.html">ประมูลสด</a><a href="create-listing.html">ลงขายการ์ด</a></div>
+      <div><h5>บัญชี</h5><a href="membership.html">แพ็กเกจสมาชิก</a><a href="credits.html">กระเป๋าเครดิต</a><a href="profile.html">โปรไฟล์</a></div>
+      <div><h5>ช่วยเหลือ</h5><a href="transfer.html">วิธีโอนตรง</a><a href="#">นโยบาย PDPA</a><a href="#">เงื่อนไขการใช้งาน</a></div>
+    </div>
+    <p class="legal">⚖️ <strong>หมายเหตุทางกฎหมาย:</strong> Neon Vault เป็นแพลตฟอร์มตัวกลางเท่านั้น ไม่รับประกัน/การันตี/รับรองความแท้ ความเห็นจากผู้ประเมินเป็นความเห็นของบุคคลภายนอกอิสระ การชำระเงินเป็นการโอนตรงระหว่างผู้ใช้ แพลตฟอร์มไม่รับ ไม่ถือ ไม่เป็นตัวกลางทางการเงิน · นี่คือ static prototype สำหรับสาธิต UI เท่านั้น</p>
+  </div>
+</footer>
+
+<div class="ribbon">● STATIC PROTOTYPE</div>
+</body>
+</html>

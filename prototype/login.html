@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!-- login.html — เข้าสู่ระบบ
+     Map FR: รองรับ FR-08/FR-10/FR-06 (สิทธิ์ใช้งานหลัง login), NFR-S1 (auth) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เข้าสู่ระบบ | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สมาชิกใหม่ใช้ฟรี 3 เดือน — <a href="register.html">สมัครเลย</a></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary">สมัครสมาชิก</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container" style="max-width:440px;">
+    <div class="card card-pad">
+      <h1 class="section-title text-center">เข้าสู่ระบบ</h1>
+      <form onsubmit="window.location='profile.html';return false;">
+        <div class="form-group">
+          <label>อีเมล หรือ ชื่อผู้ใช้</label>
+          <input class="input" type="text" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่าน</label>
+          <input class="input" type="password" placeholder="••••••••" required>
+        </div>
+        <div class="row-between mb-4">
+          <label class="checkbox-row" style="font-weight:500;"><input type="checkbox"> จดจำฉัน</label>
+          <a href="#" class="small">ลืมรหัสผ่าน?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">เข้าสู่ระบบ</button>
+      </form>
+      <p class="text-center mt-4 muted">ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก (ฟรี 3 เดือน)</a></p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน · ไม่รับประกันความแท้ของสินค้า · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

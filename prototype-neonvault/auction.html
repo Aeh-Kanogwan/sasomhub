@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- auction.html — ประมูลสด
+     FR map: FR-09 (ตั้งประมูล), FR-10 (bid ต้องสมาชิก active), FR-11 (anti-shill), FR-12 (ปิดประมูล) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ประมูลสด — Neon Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">หน้าแรก</a></li>
+      <li><a href="explore.html">เรียกดูการ์ด</a></li>
+      <li><a href="auction.html" class="active">ประมูลสด</a></li>
+      <li><a href="membership.html">สมาชิก</a></li>
+      <li><a href="credits.html">เครดิต</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary btn-sm">สมัครฟรี 3 เดือน</a>
+      <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container page-head">
+  <div class="breadcrumb">HOME / AUCTION / LIVE</div>
+  <h1>🔴 ประมูลสด</h1>
+</div>
+
+<section class="container section" style="padding-top:8px">
+  <div class="detail-grid">
+    <div class="detail-art tcard r-epic" style="transform:none">
+      <div class="rarity epic">Epic</div>
+      <div class="card-art" style="aspect-ratio:3/4"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph" style="font-size:120px">🌙</div></div>
+    </div>
+
+    <div>
+      <span class="grade">PSA 9 · MINT</span>
+      <h1 style="font-size:32px;margin-top:12px">Umbreon VMAX Alternate Art</h1>
+      <p class="muted">Evolving Skies · ซีเรียล <span class="mono">0210 / 0999</span></p>
+
+      <!-- Countdown -->
+      <p class="eyebrow stack-md">เหลือเวลา</p>
+      <div class="countdown" id="cd">
+        <div class="seg"><div class="n" id="hh">02</div><div class="u">ชม.</div></div>
+        <div class="seg"><div class="n" id="mm">14</div><div class="u">นาที</div></div>
+        <div class="seg"><div class="n" id="ss">37</div><div class="u">วินาที</div></div>
+      </div>
+
+      <!-- Current bid -->
+      <div class="glass" style="padding:22px;margin-top:22px">
+        <div class="tiny muted mono">ราคาปัจจุบัน</div>
+        <div class="current-bid">฿44,500</div>
+        <div class="tiny muted mono stack-sm">ขั้นต่ำในการเสนอครั้งถัดไป: ฿45,500 (+฿1,000)</div>
+
+        <div class="flex gap-sm stack-md">
+          <input class="input mono" value="45,500" style="border-radius:var(--r-default)">
+          <a href="transfer.html" class="btn btn-buy" style="white-space:nowrap">เสนอราคา</a>
+        </div>
+        <div class="alert alert-info stack-sm">ℹ️ การเสนอราคาต้องเป็นสมาชิกที่ membership <strong>active</strong> เท่านั้น (FR-10) — <a href="membership.html" style="color:var(--primary-fixed)">สมัคร/ต่ออายุ</a></div>
+        <div class="alert alert-warn stack-sm">🛡️ ระบบมีการตรวจจับการปั่นราคา (Anti-shill) — บัญชีที่เสนอราคาผิดปกติจะถูก flag และตัดออกจากการคิดผู้ชนะ (FR-11)</div>
+      </div>
+
+      <!-- Bid history -->
+      <div class="glass stack-md" style="padding:18px">
+        <h4 style="font-family:var(--font-display);margin-bottom:8px">ประวัติการเสนอราคา</h4>
+        <div class="bid-row"><span>nova_collector</span><span class="trust">฿44,500</span></div>
+        <div class="bid-row"><span>cardking88</span><span style="color:var(--on-surface)">฿43,500</span></div>
+        <div class="bid-row"><span>holofreak</span><span style="color:var(--on-surface)">฿42,000</span></div>
+        <div class="bid-row"><span>vault_hunter</span><span style="color:var(--on-surface)">฿40,000</span></div>
+        <div class="bid-row" style="border:0"><span class="muted">ราคาเริ่มต้น</span><span class="muted">฿35,000</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other live auctions -->
+  <div class="section-head stack-lg"><div><p class="eyebrow">MORE LIVE</p><h2 style="font-size:26px">ประมูลอื่นที่กำลังเปิด</h2></div></div>
+  <div class="card-grid" id="more"></div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div><a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a><p class="muted stack-md" style="max-width:320px">ตลาดกลางการ์ดสะสม — แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ</p></div>
+      <div><h5>สำรวจ</h5><a href="explore.html">เรียกดูการ์ด</a><a href="auction.html">ประมูลสด</a><a href="create-listing.html">ลงขายการ์ด</a></div>
+      <div><h5>บัญชี</h5><a href="membership.html">แพ็กเกจสมาชิก</a><a href="credits.html">กระเป๋าเครดิต</a><a href="profile.html">โปรไฟล์</a></div>
+      <div><h5>ช่วยเหลือ</h5><a href="transfer.html">วิธีโอนตรง</a><a href="#">นโยบาย PDPA</a><a href="#">เงื่อนไขการใช้งาน</a></div>
+    </div>
+    <p class="legal">⚖️ <strong>หมายเหตุทางกฎหมาย:</strong> Neon Vault เป็นแพลตฟอร์มตัวกลางเท่านั้น ไม่รับประกัน/การันตี/รับรองความแท้ การชำระเงินเป็นการโอนตรงระหว่างผู้ใช้ แพลตฟอร์มไม่รับ ไม่ถือ ไม่เป็นตัวกลางทางการเงิน · นี่คือ static prototype สำหรับสาธิต UI เท่านั้น</p>
+  </div>
+</footer>
+
+<div class="ribbon">● STATIC PROTOTYPE</div>
+
+<script>
+// Countdown (สาธิต)
+let total = 2*3600 + 14*60 + 37;
+const z = n => String(n).padStart(2,'0');
+setInterval(() => {
+  if (total <= 0) return;
+  total--;
+  document.getElementById('hh').textContent = z(Math.floor(total/3600));
+  document.getElementById('mm').textContent = z(Math.floor((total%3600)/60));
+  document.getElementById('ss').textContent = z(total%60);
+}, 1000);
+
+const more = [
+  {t:'Rayquaza VMAX Alt', set:'Evolving Skies', r:'epic', g:'PSA 10', p:'฿38,000', s:'#0099/0800', glyph:'🐲'},
+  {t:'Dark Magician Girl', set:'MFC', r:'rare', g:'PSA 9', p:'฿19,500', s:'#0345/1500', glyph:'✨'},
+  {t:'Mox Sapphire', set:'Beta · MTG', r:'legendary', g:'BGS 9', p:'฿142,000', s:'#0005/0900', glyph:'💎'},
+  {t:'Mewtwo GX', set:'Shining Legends', r:'rare', g:'PSA 8', p:'฿14,200', s:'#0455/2000', glyph:'🔮'},
+];
+document.getElementById('more').innerHTML = more.map(c => `
+  <a href="auction.html" class="tcard r-${c.r}">
+    <div class="rarity ${c.r}">${c.r}</div>
+    <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">${c.glyph}</div></div>
+    <div class="card-body">
+      <div class="card-title">${c.t}</div>
+      <div class="card-set">${c.set}</div>
+      <div class="card-meta"><span class="price">${c.p}</span><span class="grade">${c.g}</span></div>
+      <div class="serial">🔴 LIVE · ${c.s}</div>
+    </div>
+  </a>`).join('');
+</script>
+</body>
+</html>

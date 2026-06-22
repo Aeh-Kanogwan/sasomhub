@@ -1,0 +1,84 @@
+@model Marketplace.Web.Models.Admin.AdminPaymentDetailViewModel
+@using Marketplace.Domain.Enums
+@{
+    ViewData["Title"] = "รายละเอียดสลิป";
+    var s = Model.Slip;
+    var canReview = s.Status == PaymentSlipStatus.Pending;
+    var statusBadge = s.Status switch
+    {
+        PaymentSlipStatus.Pending => ("badge-trial", "รอตรวจสอบ"),
+        PaymentSlipStatus.Approved => ("badge-active", "อนุมัติแล้ว"),
+        PaymentSlipStatus.Rejected => ("badge-expired", "ถูกปฏิเสธ"),
+        _ => ("badge-active", s.Status.ToString())
+    };
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb"><a asp-action="Payments">การชำระเงิน</a> / รายละเอียด</div>
+    <p class="eyebrow">◈ ADMIN · SLIP</p>
+    <h1>ตรวจสอบสลิปการชำระ</h1>
+  </div>
+</div>
+
+<section class="section container">
+  <div class="glass stack-md" style="padding:24px">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+      <h4 style="margin:0">รายละเอียด</h4>
+      <span class="badge @statusBadge.Item1">@statusBadge.Item2</span>
+    </div>
+    <table style="width:100%; border-collapse:collapse">
+      <tr><td class="muted" style="padding:6px 0; width:200px">ผู้ส่ง</td><td>@s.UserEmail</td></tr>
+      <tr><td class="muted" style="padding:6px 0">ประเภทค่าธรรมเนียม</td><td>@s.FeeType</td></tr>
+      <tr><td class="muted" style="padding:6px 0">ยอดตามใบแจ้งหนี้</td><td><strong>฿@s.InvoiceAmount.ToString("N2") @s.Currency</strong> (@s.InvoiceStatus)</td></tr>
+      <tr><td class="muted" style="padding:6px 0">ยอดที่สมาชิกแจ้งว่าโอน</td><td>฿@s.AmountClaimed.ToString("N2")</td></tr>
+      <tr><td class="muted" style="padding:6px 0">วันเวลาที่โอน</td><td>@s.TransferredAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+      <tr><td class="muted" style="padding:6px 0">หมายเหตุ/เลขอ้างอิง</td><td>@(string.IsNullOrEmpty(s.BankRefNote) ? "—" : s.BankRefNote)</td></tr>
+      <tr><td class="muted" style="padding:6px 0">ส่งเมื่อ</td><td>@s.SubmittedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+      @if (s.ReviewedAtUtc is not null)
+      {
+        <tr><td class="muted" style="padding:6px 0">ตรวจสอบเมื่อ</td><td>@s.ReviewedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+      }
+      @if (!string.IsNullOrEmpty(s.ReviewNote))
+      {
+        <tr><td class="muted" style="padding:6px 0">หมายเหตุการตรวจสอบ</td><td>@s.ReviewNote</td></tr>
+      }
+    </table>
+  </div>
+
+  <div class="glass stack-md" style="padding:24px">
+    <h4 style="margin-top:0">รูปสลิป</h4>
+    @if (!string.IsNullOrEmpty(s.SlipImageUrl))
+    {
+      <a href="@s.SlipImageUrl" target="_blank"><img src="@s.SlipImageUrl" alt="slip" style="max-width:100%; border-radius:12px" /></a>
+    }
+    else
+    {
+      <p class="muted">ไม่มีรูปสลิป</p>
+    }
+  </div>
+
+  @if (canReview)
+  {
+    <div class="glass stack-md" style="padding:24px; display:flex; gap:16px; flex-wrap:wrap">
+      <form asp-action="Approve" method="post" style="flex:1; min-width:260px">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="slipId" value="@s.PaymentSlipId" />
+        <label class="muted tiny">หมายเหตุ (ถ้ามี)</label>
+        <input name="note" class="input" maxlength="400" placeholder="หมายเหตุการอนุมัติ" />
+        <button type="submit" class="btn btn-buy btn-block stack-sm">อนุมัติและยืนยันการชำระ</button>
+      </form>
+      <form asp-action="Reject" method="post" style="flex:1; min-width:260px">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="slipId" value="@s.PaymentSlipId" />
+        <label class="muted tiny">เหตุผลที่ปฏิเสธ</label>
+        <input name="note" class="input" maxlength="400" placeholder="เช่น ยอดไม่ตรง / สลิปไม่ชัด" />
+        <button type="submit" class="btn btn-ghost btn-block stack-sm">ปฏิเสธสลิป</button>
+      </form>
+    </div>
+  }
+  else
+  {
+    <a asp-action="Payments" class="btn btn-primary">กลับไปคิวตรวจสอบ</a>
+  }
+</section>

@@ -1,0 +1,21 @@
+@model Marketplace.Web.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<main class="container section">
+  <div class="glass" style="padding:40px; max-width:620px; margin:0 auto; text-align:center">
+    <p class="eyebrow">◈ SOMETHING WENT WRONG</p>
+    <h1>เกิดข้อผิดพลาด</h1>
+    <p class="muted stack-md">ขออภัย ระบบพบปัญหาในการประมวลผลคำขอของคุณ กรุณาลองใหม่อีกครั้ง</p>
+
+    @if (Model.ShowRequestId)
+    {
+      <p class="mono tiny muted stack-md">Request ID: <code>@Model.RequestId</code></p>
+    }
+
+    <div class="flex gap-md wrap" style="justify-content:center; margin-top:var(--stack-md)">
+      <a asp-controller="Home" asp-action="Index" class="btn btn-primary">กลับหน้าแรก</a>
+    </div>
+  </div>
+</main>

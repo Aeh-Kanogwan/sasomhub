@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!-- register.html — สมัครสมาชิก
+     Map FR: FR-01 (สมัคร + consent PDPA บังคับ), FR-28 (referral code single-level),
+             FR-27/IS-14 (เปิดเผยราคา + Free Trial 3 เดือนตั้งแต่สมัคร — คุ้มครองผู้บริโภค) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สมัครสมาชิก | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สมัครวันนี้ ใช้ฟรี 3 เดือน — แสดงราคาและวันหมดทดลองให้เห็นก่อนเสมอ</div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary">สมัครสมาชิก</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container" style="max-width:560px;">
+    <div class="card card-pad">
+      <h1 class="section-title">สมัครสมาชิก</h1>
+
+      <!-- FR-27: เปิดเผยราคา + วันหมด trial ตั้งแต่สมัคร (เลี่ยงเก็บเงินเงียบ) -->
+      <div class="alert alert-success">
+        <span class="ic">🎁</span>
+        <div>
+          <strong>ใช้ฟรี 3 เดือน</strong> นับจากวันสมัคร (ทดลองหมด: <strong>17 ก.ย. 2569</strong>)<br>
+          หลังหมดทดลอง ค่าสมาชิกรายปีเริ่มต้น <strong>1,000 บาท/ปี</strong> (Normal) — เราจะ <strong>แจ้งเตือนล่วงหน้า 14/3/1 วัน</strong> ก่อนทุกครั้ง และจะไม่ตัดเงินถ้าไม่ได้เปิด auto-renew
+        </div>
+      </div>
+
+      <form onsubmit="window.location='profile.html';return false;">
+        <div class="form-group">
+          <label>ชื่อผู้ใช้ <span class="required">*</span></label>
+          <input class="input" type="text" placeholder="เช่น collector_2569" required>
+        </div>
+        <div class="form-group">
+          <label>อีเมล <span class="required">*</span></label>
+          <input class="input" type="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>เบอร์โทรศัพท์ <span class="required">*</span></label>
+          <input class="input" type="tel" placeholder="08x-xxx-xxxx" required>
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่าน <span class="required">*</span></label>
+          <input class="input" type="password" placeholder="อย่างน้อย 8 ตัวอักษร" required>
+        </div>
+
+        <!-- FR-28: ช่องกรอกรหัสผู้แนะนำ (referral, single-level) -->
+        <div class="form-group">
+          <label>รหัสผู้แนะนำ (Referral) <span class="muted small">— ถ้ามี</span></label>
+          <input class="input" type="text" placeholder="เช่น REF-AB12CD">
+          <div class="hint">กรอกรหัสเพื่อรับเครดิตทั้งคุณและผู้แนะนำ (ให้รางวัลเมื่อชำระค่าสมาชิกครั้งแรก). ระบบนี้เป็น <strong>ชั้นเดียว (single-level)</strong> เท่านั้น และเครดิต <strong>ถอน/แลก/โอนเป็นเงินสดไม่ได้</strong></div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- FR-01: consent PDPA บังคับ -->
+        <div class="form-group">
+          <div class="checkbox-row">
+            <input type="checkbox" id="pdpa" required>
+            <label for="pdpa" style="font-weight:500;">
+              <span class="required">*</span> ข้าพเจ้าได้อ่านและ <strong>ยินยอม</strong> ตาม <a href="#">นโยบายความเป็นส่วนตัว (PDPA)</a> และ <a href="#">ข้อกำหนดการใช้งาน</a> (จำเป็นต้องยินยอมจึงจะสมัครได้ — บันทึกเวอร์ชัน + เวลาเป็นหลักฐาน)
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="checkbox-row">
+            <input type="checkbox" id="acknow" required>
+            <label for="acknow" style="font-weight:500;">
+              <span class="required">*</span> ข้าพเจ้ารับทราบว่าได้ <strong>ใช้ฟรี 3 เดือน</strong> หลังจากนั้นมีค่าสมาชิกรายปีตามแพ็กเกจที่เลือก
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">สมัครสมาชิก (เริ่มใช้ฟรี 3 เดือน)</button>
+      </form>
+
+      <p class="text-center mt-4 muted">มีบัญชีอยู่แล้ว? <a href="login.html">เข้าสู่ระบบ</a></p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์มเป็น “ตัวกลาง” เท่านั้น — <strong>ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน</strong> · <strong>ไม่รับประกันความแท้ของสินค้า</strong> · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้ · ระบบแนะนำเป็นชั้นเดียว (single-level)
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,246 @@
+@using System.Security.Claims
+@model Marketplace.Web.Models.Auctions.AuctionDetailViewModel
+@{
+    ViewData["Title"] = "ประมูลสด";
+
+    // FR-10: bidding reserved for ACTIVE members. POST is enforced by [Authorize(Policy="MembershipActive")];
+    // here we also branch the UI — show the bid form to active members, a CTA to everyone else.
+    var canBid = string.Equals(User?.FindFirst("MembershipActive")?.Value, "true", StringComparison.OrdinalIgnoreCase);
+
+    // Countdown contract for site.js: data-countdown = remaining seconds, child #hh/#mm/#ss.
+    // Clamp to 0 so an already-ended auction renders 00:00:00 instead of a negative value.
+    var remaining = (Model.EndsAtUtc - DateTime.UtcNow).TotalSeconds;
+    var remainingSeconds = remaining <= 0 ? 0 : (long)remaining;
+
+    var card = Model.Card;
+    var rarity = string.IsNullOrWhiteSpace(card.Rarity) ? "epic" : card.Rarity.ToLowerInvariant();
+
+    string RarityLabel(string r) => r?.ToLowerInvariant() switch
+    {
+        "legendary" => "Legendary",
+        "epic" => "Epic",
+        "rare" => "Rare",
+        _ => "Common"
+    };
+}
+
+<div class="container page-head">
+  <div class="breadcrumb">HOME / AUCTION / LIVE</div>
+  <h1>🔴 ประมูลสด</h1>
+</div>
+
+@* FR-11: surface the bid outcome posted back from AuctionsController.PlaceBid via TempData. *@
+@{
+    var bidResult = TempData["BidResult"] as string;
+    var bidMessage = TempData["BidMessage"] as string;
+}
+@if (!string.IsNullOrEmpty(bidResult) && !string.IsNullOrEmpty(bidMessage))
+{
+    var alertClass = bidResult switch
+    {
+        "accepted" => "alert-info",
+        "flagged" => "alert-warn",
+        _ => "alert-danger"
+    };
+    var icon = bidResult switch
+    {
+        "accepted" => "✅",
+        "flagged" => "🛡️",
+        _ => "⚠️"
+    };
+    <section class="container" style="margin-bottom:var(--stack-md)">
+      <div class="alert @alertClass" role="status">
+        <span>@icon</span>
+        <div>@bidMessage</div>
+      </div>
+    </section>
+}
+
+<section class="container section" style="padding-top:8px">
+  <div class="detail-grid">
+    <div class="detail-art tcard r-@rarity" style="transform:none">
+      <div class="rarity @rarity">@RarityLabel(rarity)</div>
+      <div class="card-art" style="aspect-ratio:3/4">
+        <div class="art-fill"></div>
+        <div class="refraction"></div>
+        @if (!string.IsNullOrEmpty(card.ImageUrl))
+        {
+          <img class="art-img" src="@card.ImageUrl" alt="@card.Title" />
+        }
+        else
+        {
+          <div class="art-glyph" style="font-size:120px">@(string.IsNullOrEmpty(card.Glyph) ? "🌙" : card.Glyph)</div>
+        }
+      </div>
+    </div>
+
+    <div>
+      @if (!string.IsNullOrEmpty(card.GradeLabel))
+      {
+        <span class="grade">@card.GradeLabel</span>
+      }
+      <h1 style="font-size:32px;margin-top:12px">@(string.IsNullOrEmpty(card.Title) ? "—" : card.Title)</h1>
+      <p class="muted">
+        @card.SetLabel
+        @if (!string.IsNullOrEmpty(card.SerialLabel))
+        {
+          <text> · ซีเรียล <span class="mono">@card.SerialLabel</span></text>
+        }
+      </p>
+
+      <!-- Countdown — อัปเดตโดย site.js ผ่าน data-countdown (FR-12) -->
+      <p class="eyebrow stack-md">เหลือเวลา</p>
+      <div class="countdown" id="cd" data-countdown="@remainingSeconds">
+        <div class="seg"><div class="n" id="hh">00</div><div class="u">ชม.</div></div>
+        <div class="seg"><div class="n" id="mm">00</div><div class="u">นาที</div></div>
+        <div class="seg"><div class="n" id="ss">00</div><div class="u">วินาที</div></div>
+      </div>
+
+      <!-- Current bid -->
+      <div class="glass" style="padding:22px;margin-top:22px">
+        <div class="tiny muted mono">ราคาปัจจุบัน</div>
+        <div class="current-bid">฿@Model.CurrentHighBid.ToString("#,##0")</div>
+        <div class="tiny muted mono stack-sm">
+          ขั้นต่ำในการเสนอครั้งถัดไป: ฿@Model.NextMinimumBid.ToString("#,##0") (+฿@Model.BidIncrement.ToString("#,##0"))
+        </div>
+
+        @* FR-10: active members get the bid form; everyone else (guest / trial-expired) gets a CTA.
+           POST is still gated server-side by [Authorize(Policy="MembershipActive")] regardless of this branch. *@
+        @if (canBid)
+        {
+          <form asp-action="PlaceBid" method="post" class="flex gap-sm stack-md">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="AuctionId" value="@Model.AuctionId" />
+            <input class="input mono" type="number" step="1" min="@Model.NextMinimumBid"
+                   name="Amount" value="@Model.NextMinimumBid.ToString("0")"
+                   style="border-radius:var(--r-default)" />
+            <button type="submit" class="btn btn-buy" style="white-space:nowrap">เสนอราคา</button>
+          </form>
+        }
+        else
+        {
+          <a asp-controller="Membership" asp-action="Index" class="btn btn-buy btn-block stack-md">สมัคร / ต่ออายุเพื่อเสนอราคา</a>
+        }
+
+        <div class="alert alert-info stack-sm">
+          ℹ️ การเสนอราคาต้องเป็นสมาชิกที่ membership <strong>active</strong> เท่านั้น (FR-10) —
+          <a asp-controller="Membership" asp-action="Index" style="color:var(--primary-fixed)">สมัคร/ต่ออายุ</a>
+        </div>
+        <div class="alert alert-warn stack-sm">
+          🛡️ ระบบมีการตรวจจับการปั่นราคา (Anti-shill) — บัญชีที่เสนอราคาผิดปกติจะถูก flag และตัดออกจากการคิดผู้ชนะ (FR-11)
+        </div>
+      </div>
+
+      <!-- Bid history -->
+      <div class="glass stack-md" style="padding:18px">
+        <h4 style="font-family:var(--font-display);margin-bottom:8px">ประวัติการเสนอราคา</h4>
+        @if (Model.BidHistory != null && Model.BidHistory.Count > 0)
+        {
+          foreach (var bid in Model.BidHistory)
+          {
+            <div class="bid-row">
+              <span>@bid.BidderDisplayName</span>
+              <span class="@(bid.IsCurrentHigh ? "trust" : "")"
+                    style="@(bid.IsCurrentHigh ? "" : "color:var(--on-surface)")">฿@bid.Amount.ToString("#,##0")</span>
+            </div>
+          }
+          <div class="bid-row" style="border:0">
+            <span class="muted">ราคาเริ่มต้น</span>
+            <span class="muted">฿@Model.StartingPrice.ToString("#,##0")</span>
+          </div>
+        }
+        else
+        {
+          @* TODO: backend-dev — ยังไม่มีข้อมูล bid จริง; แสดงตัวอย่างจาก prototype (display name เท่านั้น ไม่มี PII) *@
+          <div class="bid-row"><span>nova_collector</span><span class="trust">฿44,500</span></div>
+          <div class="bid-row"><span>cardking88</span><span style="color:var(--on-surface)">฿43,500</span></div>
+          <div class="bid-row"><span>holofreak</span><span style="color:var(--on-surface)">฿42,000</span></div>
+          <div class="bid-row"><span>vault_hunter</span><span style="color:var(--on-surface)">฿40,000</span></div>
+          <div class="bid-row" style="border:0"><span class="muted">ราคาเริ่มต้น</span><span class="muted">฿35,000</span></div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Other live auctions -->
+  <div class="section-head stack-lg">
+    <div><p class="eyebrow">MORE LIVE</p><h2 style="font-size:26px">ประมูลอื่นที่กำลังเปิด</h2></div>
+  </div>
+  <div class="card-grid" id="more">
+    @if (Model.MoreLive != null && Model.MoreLive.Count > 0)
+    {
+      foreach (var c in Model.MoreLive)
+      {
+        var r = string.IsNullOrWhiteSpace(c.Rarity) ? "rare" : c.Rarity.ToLowerInvariant();
+        <a asp-action="Detail" asp-route-id="@c.ProductId" class="tcard r-@r">
+          <div class="rarity @r">@RarityLabel(r)</div>
+          <div class="card-art">
+            <div class="art-fill"></div>
+            <div class="refraction"></div>
+            @if (!string.IsNullOrEmpty(c.ImageUrl))
+            {
+              <img class="art-img" src="@c.ImageUrl" alt="@c.Title" />
+            }
+            else
+            {
+              <div class="art-glyph">@(string.IsNullOrEmpty(c.Glyph) ? "🃏" : c.Glyph)</div>
+            }
+          </div>
+          <div class="card-body">
+            <div class="card-title">@c.Title</div>
+            <div class="card-set">@c.SetLabel</div>
+            <div class="card-meta">
+              <span class="price">@(c.Price.HasValue ? "฿" + c.Price.Value.ToString("#,##0") : "")</span>
+              <span class="grade">@c.GradeLabel</span>
+            </div>
+            <div class="serial">🔴 LIVE · @c.SerialLabel</div>
+          </div>
+        </a>
+      }
+    }
+    else
+    {
+      @* TODO: backend-dev — ยังไม่มีรายการ "more live" จริง; แสดงตัวอย่างจาก prototype *@
+      <a asp-action="Detail" class="tcard r-epic">
+        <div class="rarity epic">epic</div>
+        <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">🐲</div></div>
+        <div class="card-body">
+          <div class="card-title">Rayquaza VMAX Alt</div>
+          <div class="card-set">Evolving Skies</div>
+          <div class="card-meta"><span class="price">฿38,000</span><span class="grade">PSA 10</span></div>
+          <div class="serial">🔴 LIVE · #0099/0800</div>
+        </div>
+      </a>
+      <a asp-action="Detail" class="tcard r-rare">
+        <div class="rarity rare">rare</div>
+        <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">✨</div></div>
+        <div class="card-body">
+          <div class="card-title">Dark Magician Girl</div>
+          <div class="card-set">MFC</div>
+          <div class="card-meta"><span class="price">฿19,500</span><span class="grade">PSA 9</span></div>
+          <div class="serial">🔴 LIVE · #0345/1500</div>
+        </div>
+      </a>
+      <a asp-action="Detail" class="tcard r-legendary">
+        <div class="rarity legendary">legendary</div>
+        <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">💎</div></div>
+        <div class="card-body">
+          <div class="card-title">Mox Sapphire</div>
+          <div class="card-set">Beta · MTG</div>
+          <div class="card-meta"><span class="price">฿142,000</span><span class="grade">BGS 9</span></div>
+          <div class="serial">🔴 LIVE · #0005/0900</div>
+        </div>
+      </a>
+      <a asp-action="Detail" class="tcard r-rare">
+        <div class="rarity rare">rare</div>
+        <div class="card-art"><div class="art-fill"></div><div class="refraction"></div><div class="art-glyph">🔮</div></div>
+        <div class="card-body">
+          <div class="card-title">Mewtwo GX</div>
+          <div class="card-set">Shining Legends</div>
+          <div class="card-meta"><span class="price">฿14,200</span><span class="grade">PSA 8</span></div>
+          <div class="serial">🔴 LIVE · #0455/2000</div>
+        </div>
+      </a>
+    }
+  </div>
+</section>

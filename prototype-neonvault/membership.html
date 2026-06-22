@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!-- membership.html — Neon Vault | แพ็กเกจสมาชิก
+     FR map: FR-27 (ค่าสมาชิกรายปี 3 ระดับ + Free Trial 3 เดือน), FR-32 (auto-renew + แจ้งเตือนก่อนหมดอายุ 14/3/1 วัน) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Vault — แพ็กเกจสมาชิก</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== Navbar (shared) ===== -->
+<nav class="navbar">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <span class="logo-mark">◈</span> Neon Vault
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">หน้าแรก</a></li>
+      <li><a href="explore.html">เรียกดูการ์ด</a></li>
+      <li><a href="auction.html">ประมูลสด</a></li>
+      <li><a href="membership.html" class="active">สมาชิก</a></li>
+      <li><a href="credits.html">เครดิต</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">เข้าสู่ระบบ</a>
+      <a href="register.html" class="btn btn-primary btn-sm">สมัครฟรี 3 เดือน</a>
+      <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Page head ===== -->
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / สมาชิก</div>
+    <p class="eyebrow">◈ MEMBERSHIP</p>
+    <h1>แพ็กเกจสมาชิก</h1>
+    <p class="muted stack-md" style="max-width:620px">ทุกแพ็กเกจ <span class="gradient-text">ทดลองฟรี 3 เดือน</span> นับจากวันสมัคร — เปิดเผยราคาชัดเจน ไม่ตัดเงินเงียบ เราแจ้งเตือนล่วงหน้า 14/3/1 วันก่อนหมดอายุ</p>
+  </div>
+</div>
+
+<!-- ===== Plan grid (FR-27) ===== -->
+<section class="section container">
+  <div class="plan-grid">
+
+    <!-- Normal -->
+    <div class="plan glass">
+      <span class="badge badge-trial">ฟรี 3 เดือน</span>
+      <h3>Normal</h3>
+      <div class="amount">฿1,000<small>/ปี</small></div>
+      <ul class="feat">
+        <li>✓ ลงขายการ์ดได้</li>
+        <li>✓ เข้าร่วมประมูลสดได้</li>
+        <li>✓ ดูประวัติราคาแบบเรียลไทม์</li>
+        <li>✓ กระเป๋าเครดิตพื้นฐาน</li>
+      </ul>
+      <a href="register.html" class="btn btn-primary btn-block">อัพเกรดเป็น Normal</a>
+    </div>
+
+    <!-- Verified -->
+    <div class="plan glass">
+      <span class="badge badge-trial">ฟรี 3 เดือน</span>
+      <h3>Verified</h3>
+      <div class="amount">฿1,500<small>/ปี</small></div>
+      <ul class="feat">
+        <li>✓ ทุกสิทธิ์ของ Normal</li>
+        <li>✓ ยืนยันตัวตน e-KYC ผ่าน NDID</li>
+        <li>✓ ป้าย Verified ข้างชื่อโปรไฟล์</li>
+        <li>✓ ลงการ์ดมูลค่าสูงได้</li>
+      </ul>
+      <a href="register.html" class="btn btn-primary btn-block">อัพเกรดเป็น Verified</a>
+    </div>
+
+    <!-- Premium (featured) -->
+    <div class="plan glass featured">
+      <span class="badge badge-trial">ฟรี 3 เดือน</span>
+      <h3>Premium</h3>
+      <div class="amount">฿2,000<small>/ปี</small></div>
+      <ul class="feat">
+        <li>✓ ทุกสิทธิ์ของ Verified</li>
+        <li>✓ โปรโมต listing ขึ้นหน้าแรก</li>
+        <li>✓ ลดค่าธรรมเนียมการขาย</li>
+        <li>✓ การ์ดวิเคราะห์ราคาเชิงลึก</li>
+      </ul>
+      <a href="register.html" class="btn btn-buy btn-block">อัพเกรดเป็น Premium</a>
+    </div>
+
+  </div>
+
+  <!-- ===== Auto-renew toggle (FR-32) ===== -->
+  <div class="glass stack-lg" style="padding:24px; display:flex; align-items:center; justify-content:space-between; gap:var(--stack-md); flex-wrap:wrap">
+    <div style="display:flex; align-items:center; gap:14px">
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      <div>
+        <div style="font-family:var(--font-display); font-weight:700">ต่ออายุอัตโนมัติรายปี</div>
+        <p class="muted tiny stack-sm">ระบบจะแจ้งเตือนก่อนหมดอายุ 14/3/1 วัน และตัดเงินเฉพาะเมื่อแจ้งครบแล้ว (FR-32)</p>
+      </div>
+    </div>
+    <span class="chip">ปิดได้ทุกเมื่อ</span>
+  </div>
+
+  <!-- ===== No-touch note ===== -->
+  <div class="alert alert-info stack-lg">
+    <span>ℹ️</span>
+    <span>ค่าสมาชิกเป็นรายได้ของแพลตฟอร์มและแยกต่างหากจาก flow การซื้อขายการ์ด — แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงินในการซื้อขายระหว่างผู้ใช้</span>
+  </div>
+</section>
+
+<!-- ===== Footer (shared) ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="index.html"><span class="logo-mark">◈</span> Neon Vault</a>
+        <p class="muted stack-md" style="max-width:320px">ตลาดกลางการ์ดสะสม — แพลตฟอร์มเป็นเพียงตัวกลางการประกาศ ไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงินในการซื้อขาย</p>
+      </div>
+      <div><h5>สำรวจ</h5><a href="explore.html">เรียกดูการ์ด</a><a href="auction.html">ประมูลสด</a><a href="create-listing.html">ลงขายการ์ด</a></div>
+      <div><h5>บัญชี</h5><a href="membership.html">แพ็กเกจสมาชิก</a><a href="credits.html">กระเป๋าเครดิต</a><a href="profile.html">โปรไฟล์</a></div>
+      <div><h5>ช่วยเหลือ</h5><a href="transfer.html">วิธีโอนตรง</a><a href="#">นโยบาย PDPA</a><a href="#">เงื่อนไขการใช้งาน</a></div>
+    </div>
+    <p class="legal">⚖️ <strong>หมายเหตุทางกฎหมาย:</strong> Neon Vault เป็นแพลตฟอร์มตัวกลางสำหรับประกาศซื้อขายการ์ดสะสมเท่านั้น เราไม่รับประกัน ไม่การันตี และไม่รับรองความแท้ของสินค้า ความเห็นจากผู้ประเมินเป็นความเห็นประกอบของบุคคลภายนอกอิสระ การชำระเงินเป็นการโอนตรงระหว่างผู้ซื้อ-ผู้ขาย แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางทางการเงิน · เครดิตใช้ในแพลตฟอร์มเท่านั้น ถอน/โอนเป็นเงินสดไม่ได้ · นี่คือ static prototype สำหรับสาธิต UI เท่านั้น</p>
+  </div>
+</footer>
+
+<div class="ribbon">● STATIC PROTOTYPE</div>
+
+</body>
+</html>

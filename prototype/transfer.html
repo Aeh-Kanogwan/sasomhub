@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!-- transfer.html — หน้าโอนตรง (No-touch Payment) หลังปิดดีล
+     Map FR: FR-18 (no-touch: แสดงบัญชีผู้ขายให้โอนตรง + ข้อความแพลตฟอร์มไม่รับ/ไม่ถือเงิน),
+             FR-19 (ยืนยันการโอน/ยืนยันรับของ), FR-17 (warn-on-deal ถ้าคู่ค้าใน blacklist) -->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ปิดดีล: โอนตรง | ตลาดของสะสม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="mock-ribbon">ตัวอย่างหน้าจอ (Static Prototype) — ไม่เชื่อมต่อระบบจริง</div>
+<div class="trial-banner">🎁 สมาชิกทดลอง (Trial) ใช้งานอยู่</div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="brand">🏺 ตลาดของสะสม</a>
+    <div class="nav-links">
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+      <a href="create-listing.html">ลงประกาศขาย</a>
+    </div>
+    <div class="nav-actions">
+      <a href="profile.html" class="btn btn-ghost">โปรไฟล์</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container" style="max-width:680px;">
+    <h1 class="section-title">ปิดดีล &amp; การชำระเงิน (โอนตรง)</h1>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step done"><span class="num">✓</span> ตกลงซื้อขาย</div>
+      <div class="step active"><span class="num">2</span> โอนตรงให้ผู้ขาย</div>
+      <div class="step"><span class="num">3</span> ยืนยันรับของ + รีวิว</div>
+    </div>
+
+    <!-- FR-18: ข้อความ no-touch เด่นชัด -->
+    <div class="alert alert-danger">
+      <span class="ic">🚫</span>
+      <div><strong>แพลตฟอร์มไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน</strong> — ระบบไม่มีบัญชีตัวกลาง/escrow/wallet ใด ๆ กรุณาโอนเงิน <strong>ตรงเข้าบัญชีผู้ขาย</strong> ด้านล่าง และตรวจสอบสินค้า/คู่ค้าก่อนโอนทุกครั้ง ความเสี่ยงในการโอนเป็นของผู้ซื้อ-ผู้ขายโดยตรง</div>
+    </div>
+
+    <!-- FR-17: warn-on-deal demo -->
+    <div class="alert alert-warning">
+      <span class="ic">🔔</span>
+      <div><strong>คำเตือนก่อนทำดีล:</strong> ระบบไม่พบสถานะระงับของคู่ค้ารายนี้ — หากคู่ค้าถูกระงับเนื่องจากละเมิดข้อกำหนด ระบบจะแสดงคำเตือนนี้เฉพาะแก่คุณด้วยถ้อยคำกลาง (ไม่ใช่รายชื่อประจานสาธารณะ)</div>
+    </div>
+
+    <!-- FR-18: ข้อมูลบัญชีผู้ขายให้โอนตรง -->
+    <div class="card card-pad">
+      <div class="row-between mb-3">
+        <h3 style="margin:0">ข้อมูลบัญชีผู้ขาย (โอนตรง)</h3>
+        <span class="badge badge-verified">✓ ผู้ขาย Verified</span>
+      </div>
+      <div class="bank-box">
+        <div class="field"><span class="muted">ธนาคาร</span><b>ธนาคารกสิกรไทย</b></div>
+        <div class="field"><span class="muted">ชื่อบัญชี</span><b>นายสมชาย ใจดี</b></div>
+        <div class="field"><span class="muted">เลขบัญชี</span><b>xxx-x-x4567-x</b></div>
+        <div class="field"><span class="muted">ยอดที่ตกลง</span><b style="color:var(--color-primary)">฿ 45,000</b></div>
+      </div>
+      <p class="muted small mt-3">📌 จำนวนเงินนี้เป็นข้อตกลงระหว่างผู้ซื้อ-ผู้ขายโดยตรง แพลตฟอร์มไม่ได้มีส่วนเกี่ยวข้องกับการรับเงินใด ๆ</p>
+    </div>
+
+    <!-- FR-19: ปุ่มยืนยันการโอน / ยืนยันรับของ -->
+    <div class="grid-2 mt-4">
+      <button class="btn btn-outline btn-lg">📤 ฉันได้โอนแล้ว (แจ้งผู้ขาย)</button>
+      <a href="profile.html" class="btn btn-success btn-lg">📦 ยืนยันรับของ + ให้รีวิว</a>
+    </div>
+    <p class="text-center muted small mt-3">เมื่อยืนยันรับของ ระบบจะปิดธุรกรรมและให้ทั้งสองฝ่ายรีวิว (มีผลต่อ Trust Score)</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div>
+      <h4>🏺 ตลาดของสะสม</h4>
+      <p>แพลตฟอร์มตัวกลางสำหรับซื้อขายของสะสม</p>
+    </div>
+    <div>
+      <h4>เมนู</h4>
+      <a href="index.html">หน้าแรก</a>
+      <a href="auction.html">ประมูล</a>
+      <a href="membership.html">แพ็กเกจสมาชิก</a>
+      <a href="credits.html">เครดิต</a>
+    </div>
+    <div>
+      <h4>บัญชี</h4>
+      <a href="login.html">เข้าสู่ระบบ</a>
+      <a href="register.html">สมัครสมาชิก</a>
+      <a href="profile.html">โปรไฟล์ของฉัน</a>
+    </div>
+    <div class="legal-note">
+      ⚖️ <strong>ข้อจำกัดสำคัญ:</strong> แพลตฟอร์ม <strong>ไม่รับ ไม่ถือ และไม่เป็นตัวกลางการเงิน</strong> — ผู้ซื้อโอนตรงให้ผู้ขาย · ไม่มี escrow/wallet · ไม่รับประกันความแท้ของสินค้า · ไม่คืนเงินแทนคู่ดีล
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

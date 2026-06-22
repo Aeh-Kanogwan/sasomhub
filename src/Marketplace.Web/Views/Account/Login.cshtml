@@ -1,0 +1,41 @@
+@model Marketplace.Web.Models.Account.LoginViewModel
+@{
+    ViewData["Title"] = "เข้าสู่ระบบ";
+}
+
+@* ===== Auth: Login (FR-01) ===== *@
+<main class="auth-wrap">
+  <div class="auth-card glass">
+    <p class="eyebrow">◈ WELCOME BACK</p>
+    <h1>เข้าสู่ระบบ</h1>
+    <p class="muted">ยินดีต้อนรับกลับสู่ <span class="gradient-text">Neon Vault</span></p>
+
+    <form class="stack-lg" asp-controller="Account" asp-action="Login" method="post">
+      @Html.AntiForgeryToken()
+      <input type="hidden" asp-for="ReturnUrl" />
+      <div asp-validation-summary="ModelOnly" class="alert alert-warn"></div>
+
+      <div class="field">
+        <label asp-for="Email">อีเมล</label>
+        <input class="input" asp-for="Email" type="email" placeholder="you@example.com">
+        <span asp-validation-for="Email" class="tiny" style="color:var(--danger)"></span>
+      </div>
+      <div class="field">
+        <label asp-for="Password">รหัสผ่าน</label>
+        <input class="input" asp-for="Password" type="password" placeholder="รหัสผ่านของคุณ">
+        <span asp-validation-for="Password" class="tiny" style="color:var(--danger)"></span>
+      </div>
+
+      <div class="flex between center" style="margin-bottom:var(--stack-md)">
+        <label class="check"><input asp-for="RememberMe" type="checkbox"><span>จดจำฉันไว้</span></label>
+        <a href="#" class="tiny" style="color:var(--primary-fixed)">ลืมรหัสผ่าน?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
+    </form>
+
+    <p class="muted tiny stack-lg" style="text-align:center">
+      ยังไม่มีบัญชี? <a asp-controller="Account" asp-action="Register" style="color:var(--primary-fixed)">สมัครฟรี 3 เดือน</a>
+    </p>
+  </div>
+</main>
