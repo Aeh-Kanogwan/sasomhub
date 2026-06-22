@@ -73,7 +73,9 @@ public enum ListingPromotionStatus { Active, Expired, Cancelled }
 public enum NotificationType
 {
     TrialExpiring, RenewalDue, RenewalCharged, MembershipExpired,
-    PromotionExpiring, PenaltyIssued, AppealUpdate
+    PromotionExpiring, PenaltyIssued, AppealUpdate,
+    // FR-12: auction-close notices to the winner/seller (informational, milestone-less, in-app).
+    AuctionWon, AuctionClosed
 }
 
 /// <summary>Notification delivery channel. CHECK CK_Notif_Channel.</summary>

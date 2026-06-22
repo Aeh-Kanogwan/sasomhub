@@ -10,9 +10,10 @@ public class ReferralServiceTests
 {
     private static (ReferralService referral, CreditService credit) Build(Marketplace.Infrastructure.Persistence.MarketplaceDbContext db)
     {
-        var credit = new CreditService(db);
+        var audit = TestDb.Audit(db);
+        var credit = new CreditService(db, audit);
         var config = new ConfigVersionResolver(db);
-        return (new ReferralService(db, credit, config), credit);
+        return (new ReferralService(db, credit, config, audit), credit);
     }
 
     [Fact]

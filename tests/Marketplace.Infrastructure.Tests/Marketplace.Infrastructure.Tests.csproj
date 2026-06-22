@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Marketplace.Domain\Marketplace.Domain.csproj" />
     <ProjectReference Include="..\..\src\Marketplace.Application\Marketplace.Application.csproj" />
     <ProjectReference Include="..\..\src\Marketplace.Infrastructure\Marketplace.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Marketplace.Worker\Marketplace.Worker.csproj" />
   </ItemGroup>
 
 </Project>

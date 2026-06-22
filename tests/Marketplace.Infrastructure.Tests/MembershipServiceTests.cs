@@ -14,7 +14,7 @@ public class MembershipServiceTests
     private const byte PremiumTier = 3;  // 2000
 
     private static MembershipService Build(Marketplace.Infrastructure.Persistence.MarketplaceDbContext db)
-        => new(db, new ConfigVersionResolver(db));
+        => new(db, new ConfigVersionResolver(db), TestDb.Audit(db));
 
     [Fact]
     public async Task StartTrial_sets_trial_window_three_months_and_active_gate()

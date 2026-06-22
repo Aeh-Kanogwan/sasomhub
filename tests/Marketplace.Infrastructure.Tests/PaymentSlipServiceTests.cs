@@ -16,7 +16,7 @@ public class PaymentSlipServiceTests
 
     private static (MembershipService membership, PaymentSlipService slips) Build(MarketplaceDbContext db)
     {
-        var membership = new MembershipService(db, new ConfigVersionResolver(db));
+        var membership = new MembershipService(db, new ConfigVersionResolver(db), TestDb.Audit(db));
         var slips = new PaymentSlipService(db, membership, NullLogger<PaymentSlipService>.Instance);
         return (membership, slips);
     }

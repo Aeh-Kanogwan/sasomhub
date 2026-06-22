@@ -1,3 +1,4 @@
+using Marketplace.Application.Auditing;
 using Marketplace.Application.Common;
 using Marketplace.Application.Memberships;
 using Marketplace.Domain.Entities;
@@ -20,11 +21,13 @@ public sealed class MembershipService : IMembershipService
 
     private readonly MarketplaceDbContext _db;
     private readonly ConfigVersionResolver _config;
+    private readonly IAuditService _audit;
 
-    public MembershipService(MarketplaceDbContext db, ConfigVersionResolver config)
+    public MembershipService(MarketplaceDbContext db, ConfigVersionResolver config, IAuditService audit)
     {
         _db = db;
         _config = config;
+        _audit = audit;
     }
 
     /// <summary>FR-27: create the TRIAL membership at signup; trialEnd = signup + 3 months (length from config).</summary>
@@ -109,7 +112,7 @@ public sealed class MembershipService : IMembershipService
 
         // FR-22: platform revenue, billed separately from buyer↔seller money (no commission %).
         // Issued ONLY — the membership is NOT extended until the fee is confirmed paid (Flow B).
-        _db.FeeInvoices.Add(new FeeInvoice
+        var invoice = new FeeInvoice
         {
             UserId = membership.UserId,
             FeeType = FeeType.MembershipRenewal,
@@ -118,7 +121,16 @@ public sealed class MembershipService : IMembershipService
             Currency = "THB",
             Status = FeeInvoiceStatus.Issued,
             IssuedAtUtc = now,
-        });
+        };
+        _db.FeeInvoices.Add(invoice);
+
+        // FR-24: audit the renewal-invoice issuance (the money effect happens later on payment confirmation).
+        _audit.Write(
+            action: "Membership.RenewInvoiceIssued",
+            entityType: "Membership",
+            entityId: membership.MembershipId.ToString("N"),
+            actorUserId: membership.UserId,
+            after: new { membership.MembershipId, FeeType = FeeType.MembershipRenewal.ToString(), Amount = price, membership.AutoRenew });
 
         await _db.SaveChangesAsync(ct);
         return Result<MembershipDto>.Success(ToDto(membership));
@@ -171,6 +183,15 @@ public sealed class MembershipService : IMembershipService
             IssuedAtUtc = now,
         });
 
+        // FR-24: audit the upgrade request (tier is NOT switched until the fee is confirmed paid).
+        _audit.Write(
+            action: "Membership.UpgradeRequested",
+            entityType: "Membership",
+            entityId: membership.MembershipId.ToString("N"),
+            actorUserId: membership.UserId,
+            before: new { CurrentTierId = membership.MembershipTierId },
+            after: new { PendingUpgradeTierId = newTier.MembershipTierId, ProratedAmount = prorated });
+
         await _db.SaveChangesAsync(ct);
 
         // TODO(kyc): if newTier.RequiresKyc, enforce completed KYC before allowing the upgrade.
@@ -209,9 +230,19 @@ public sealed class MembershipService : IMembershipService
             if (membership.PendingUpgradeTierId is { } targetTierId &&
                 membership.MembershipTierId != targetTierId)
             {
+                var fromTierId = membership.MembershipTierId;
                 membership.MembershipTierId = targetTierId;
                 membership.PaidAmountTHB = await ResolveTierPriceAsync(targetTierId, now, ct);
                 membership.UpdatedAtUtc = now;
+
+                // FR-24: audit the applied tier switch (only when it actually changes — idempotent re-runs do not re-audit).
+                _audit.Write(
+                    action: "Membership.UpgradeApplied",
+                    entityType: "Membership",
+                    entityId: membership.MembershipId.ToString("N"),
+                    actorUserId: membership.UserId,
+                    before: new { TierId = fromTierId },
+                    after: new { TierId = targetTierId, PaidAmountTHB = membership.PaidAmountTHB, FeeInvoiceId = feeInvoiceId });
             }
             // Clear the pending marker once consumed.
             if (membership.PendingUpgradeTierId is not null)
@@ -228,11 +259,22 @@ public sealed class MembershipService : IMembershipService
 
             if (!alreadyApplied)
             {
+                var fromStatus = membership.Status;
+                var fromPaidThrough = membership.PaidThroughUtc;
                 var baseInstant = membership.PaidThroughUtc is { } cur && cur > now ? cur : now;
                 membership.Status = MembershipStatus.Active;
                 membership.PaidThroughUtc = baseInstant.AddYears(1);
                 membership.PaidAmountTHB = invoice.Amount; // Y-06: snapshot the charged price (no retroactive pricing)
                 membership.UpdatedAtUtc = now;
+
+                // FR-24: audit the applied activation/renewal (only on the first effective confirmation).
+                _audit.Write(
+                    action: "Membership.RenewApplied",
+                    entityType: "Membership",
+                    entityId: membership.MembershipId.ToString("N"),
+                    actorUserId: membership.UserId,
+                    before: new { Status = fromStatus.ToString(), PaidThroughUtc = fromPaidThrough },
+                    after: new { Status = MembershipStatus.Active.ToString(), membership.PaidThroughUtc, PaidAmountTHB = invoice.Amount, FeeInvoiceId = feeInvoiceId });
             }
         }
 

@@ -34,6 +34,9 @@ public static class DependencyInjection
         // Membership / Credit / Referral services (FR-05/22/27/28/29/30). Scoped: they depend on the
         // scoped DbContext. NOTE: the parallel Auction/Trade/Trust services are registered elsewhere.
         services.AddScoped<ConfigVersionResolver>();           // B-04/G-4 config-version price resolver
+        // FR-24/NFR-A1/A2: append-only audit writer (AuditLogs). Scoped: shares the request/worker-scope
+        // DbContext so audit rows commit in the same SaveChanges/transaction as the audited action.
+        services.AddScoped<Marketplace.Application.Auditing.IAuditService, AuditService>();
         // NFR-S1: one-way password hashing (PBKDF2, BCL-only). Stateless -> singleton.
         services.AddSingleton<Marketplace.Application.Common.IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddScoped<IMembershipService, MembershipService>();

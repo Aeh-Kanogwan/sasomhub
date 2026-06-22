@@ -57,7 +57,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         b.ToTable("Notifications", t =>
         {
             t.HasCheckConstraint("CK_Notif_Type",
-                "[Type] IN ('TrialExpiring','RenewalDue','RenewalCharged','MembershipExpired','PromotionExpiring','PenaltyIssued','AppealUpdate')");
+                "[Type] IN ('TrialExpiring','RenewalDue','RenewalCharged','MembershipExpired','PromotionExpiring','PenaltyIssued','AppealUpdate','AuctionWon','AuctionClosed')");
             t.HasCheckConstraint("CK_Notif_Channel", "[Channel] IN ('Email','InApp','Sms')");
             t.HasCheckConstraint("CK_Notif_Status", "[Status] IN ('Pending','Sent','Failed','Skipped')");
             t.HasCheckConstraint("CK_Notif_Milestone", "[Milestone] IS NULL OR [Milestone] IN (14,3,1)");

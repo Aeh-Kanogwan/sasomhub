@@ -1,4 +1,5 @@
 using Marketplace.Application.Auctions;
+using Marketplace.Application.Auditing;
 using Marketplace.Application.Common;
 using Marketplace.Application.Trades;
 using Marketplace.Domain.Entities;
@@ -29,12 +30,14 @@ public class AuctionService : IAuctionService
 {
     private readonly MarketplaceDbContext _db;
     private readonly ITradeService _tradeService;
+    private readonly IAuditService _audit;
     private readonly ILogger<AuctionService> _logger;
 
-    public AuctionService(MarketplaceDbContext db, ITradeService tradeService, ILogger<AuctionService> logger)
+    public AuctionService(MarketplaceDbContext db, ITradeService tradeService, IAuditService audit, ILogger<AuctionService> logger)
     {
         _db = db;
         _tradeService = tradeService;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -159,6 +162,17 @@ public class AuctionService : IAuctionService
             if (auction.Product.Status == ProductStatus.Active)
                 auction.Product.Status = ProductStatus.Closed;
             auction.Product.UpdatedAtUtc = now;
+
+            // FR-24: audit the close (no sale). No winner -> only the seller is a party; AuctionClosed
+            // notice is informational, in-app, milestone-less (so it is exempt from the lifecycle dedupe index).
+            _audit.Write(
+                action: "Auction.ClosedNoWinner",
+                entityType: "Auction",
+                entityId: auctionId.ToString("N"),
+                actorUserId: null,
+                after: new { auction.AuctionId, auction.ProductId, WinnerBidId = (Guid?)null });
+            AddAuctionNotice(auction.Product.SellerId, now);
+
             await _db.SaveChangesAsync(ct);
             _logger.LogInformation("Auction {AuctionId} closed with no winner.", auctionId);
             return Result.Success();
@@ -195,9 +209,51 @@ public class AuctionService : IAuctionService
             return Result.Fail($"Auction closed but transfer record failed: {txResult.Error}");
         }
 
+        // FR-12/FR-24: audit the close-with-winner and notify both parties (winner + seller). The
+        // no-touch transaction itself is audited inside TradeService. Notifications are in-app,
+        // milestone-less, so they are exempt from the lifecycle dedupe index (UX_Notif_NoDup).
+        _audit.Write(
+            action: "Auction.ClosedWithWinner",
+            entityType: "Auction",
+            entityId: auctionId.ToString("N"),
+            actorUserId: null,
+            after: new
+            {
+                auction.AuctionId,
+                auction.ProductId,
+                WinnerBidId = winner.BidId,
+                WinnerUserId = winner.BidderId,
+                SellerUserId = auction.Product.SellerId,
+                WinningAmount = winner.Amount,
+                TransactionId = txResult.Value!.TransactionId,
+            });
+        AddAuctionNotice(winner.BidderId, now, won: true);
+        AddAuctionNotice(auction.Product.SellerId, now, won: false);
+        await _db.SaveChangesAsync(ct);
+
         _logger.LogInformation("Auction {AuctionId} closed. Winner bid {BidId}, no-touch tx {TxId}.",
             auctionId, winner.BidId, txResult.Value!.TransactionId);
         return Result.Success();
+    }
+
+    /// <summary>
+    /// FR-12: stage an in-app auction-close notice for a party. Milestone-less (NULL) and
+    /// membership-less so it sits outside the lifecycle dedupe index UX_Notif_NoDup; the
+    /// NotificationDispatchService delivers it like any other Pending in-app notice.
+    /// </summary>
+    private void AddAuctionNotice(Guid userId, DateTime now, bool won = false)
+    {
+        _db.Notifications.Add(new Notification
+        {
+            UserId = userId,
+            Type = won ? NotificationType.AuctionWon : NotificationType.AuctionClosed,
+            Channel = NotificationChannel.InApp,
+            RelatedMembershipId = null,
+            Milestone = null,
+            ScheduledForUtc = now,
+            Status = NotificationStatus.Pending,
+            CreatedAtUtc = now,
+        });
     }
 
     public async Task<Result> RunAntiShillCheckAsync(Guid bidId, CancellationToken ct = default)

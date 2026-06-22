@@ -1,3 +1,4 @@
+using Marketplace.Application.Auditing;
 using Marketplace.Application.Common;
 using Marketplace.Application.Credits;
 using Marketplace.Domain.Entities;
@@ -20,8 +21,13 @@ namespace Marketplace.Infrastructure.Services;
 public sealed class CreditService : ICreditService
 {
     private readonly MarketplaceDbContext _db;
+    private readonly IAuditService _audit;
 
-    public CreditService(MarketplaceDbContext db) => _db = db;
+    public CreditService(MarketplaceDbContext db, IAuditService audit)
+    {
+        _db = db;
+        _audit = audit;
+    }
 
     /// <summary>FR-28: grant earned credit (positive ledger row) with optional expiry. Idempotent per (Type, refId).</summary>
     public Task<Result> GrantAsync(Guid userId, decimal amount, CreditTransactionType type, string? refId,
@@ -119,7 +125,7 @@ public sealed class CreditService : ICreditService
             account.Balance = newBalance;
             account.UpdatedAtUtc = DateTime.UtcNow;
 
-            _db.CreditTransactions.Add(new CreditTransaction
+            var ledgerRow = new CreditTransaction
             {
                 UserId = userId,
                 Amount = delta,
@@ -130,10 +136,17 @@ public sealed class CreditService : ICreditService
                 ExpiresAtUtc = expiresAtUtc,
                 Note = note,
                 CreatedAtUtc = DateTime.UtcNow,
-            });
+            };
+            _db.CreditTransactions.Add(ledgerRow);
 
-            // TODO(audit): write an AuditLogs row (FR-24/FR-29) for this credit op once the audit
-            // service exists — credit grants/spends/expiries MUST be auditable.
+            // FR-24/FR-29: credit grants/spends/expiries MUST be auditable. Staged on the same unit of
+            // work so the audit row commits atomically with the ledger row + balance update below.
+            _audit.Write(
+                action: $"Credit.{type}",
+                entityType: "CreditTransaction",
+                entityId: refId,
+                actorUserId: null, // credit ops are system/worker-driven (referral payout, promo spend, expiry sweep)
+                after: new { UserId = userId, Amount = delta, Type = type.ToString(), BalanceAfter = newBalance, RefId = refId, ExpiresAtUtc = expiresAtUtc });
 
             await _db.SaveChangesAsync(ct);
             if (tx is not null) await tx.CommitAsync(ct);

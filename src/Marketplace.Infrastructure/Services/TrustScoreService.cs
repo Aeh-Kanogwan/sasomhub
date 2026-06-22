@@ -1,3 +1,4 @@
+using Marketplace.Application.Auditing;
 using Marketplace.Application.Common;
 using Marketplace.Application.Reputation;
 using Marketplace.Domain.Entities;
@@ -36,11 +37,13 @@ public class TrustScoreService : ITrustScoreService
     public const byte SevereSeverityThreshold = 4; // Severity 4-5 => propose ban + blacklist
 
     private readonly MarketplaceDbContext _db;
+    private readonly IAuditService _audit;
     private readonly ILogger<TrustScoreService> _logger;
 
-    public TrustScoreService(MarketplaceDbContext db, ILogger<TrustScoreService> logger)
+    public TrustScoreService(MarketplaceDbContext db, IAuditService audit, ILogger<TrustScoreService> logger)
     {
         _db = db;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -95,6 +98,8 @@ public class TrustScoreService : ITrustScoreService
 
         var delta = request.DeltaOverride ?? reason.DefaultScorePenalty;
         var now = DateTime.UtcNow;
+        var oldScore = score.Score;
+        var statusBefore = user.AccountStatus;
         var newScore = Math.Clamp(score.Score + delta, 0, 100);
 
         score.Score = newScore;
@@ -114,6 +119,25 @@ public class TrustScoreService : ITrustScoreService
         });
 
         ApplyAutoPenalty(user, reason, newScore, request, now);
+
+        // FR-24/FR-25: audit the trust-score change + any auto status transition (suspend / ban-proposal).
+        // Same unit of work -> the audit commits with the score/history/penalty rows.
+        _audit.Write(
+            action: user.AccountStatus != statusBefore ? "TrustScore.PenaltyApplied" : "TrustScore.EventApplied",
+            entityType: "User",
+            entityId: request.UserId.ToString("N"),
+            actorUserId: request.ActorUserId,
+            before: new { Score = oldScore, AccountStatus = statusBefore.ToString() },
+            after: new
+            {
+                Score = newScore,
+                Delta = delta,
+                AccountStatus = user.AccountStatus.ToString(),
+                ReasonCode = reason.Code,
+                reason.Severity,
+                request.RelatedTransactionId,
+                request.Note,
+            });
 
         await _db.SaveChangesAsync(ct);
         return Result<TrustScoreDto>.Success(ToDto(score));
@@ -151,6 +175,16 @@ public class TrustScoreService : ITrustScoreService
         {
             user.AccountStatus = AccountStatus.Suspended;
             user.UpdatedAtUtc = DateTime.UtcNow;
+
+            // FR-24: audit the worker-driven suspension (re-assert of the <60 rule).
+            _audit.Write(
+                action: "TrustScore.AutoSuspended",
+                entityType: "User",
+                entityId: userId.ToString("N"),
+                actorUserId: null,
+                before: new { AccountStatus = AccountStatus.Active.ToString() },
+                after: new { AccountStatus = AccountStatus.Suspended.ToString(), score.Score, Threshold = SuspendThreshold });
+
             await _db.SaveChangesAsync(ct);
             _logger.LogInformation("TrustScoreRecalc: user {UserId} suspended (score {Score} < {Threshold}).",
                 userId, score.Score, SuspendThreshold);

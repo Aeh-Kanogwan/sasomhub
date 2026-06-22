@@ -1,3 +1,4 @@
+using Marketplace.Domain.Entities;
 using Marketplace.Domain.Enums;
 using Marketplace.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -5,20 +6,19 @@ using Microsoft.EntityFrameworkCore;
 namespace Marketplace.Worker.Services;
 
 /// <summary>
-/// B-01/G-1, FR-27: dispatches membership advance-notice reminders at 14 / 3 / 1 days before
-/// trial end or annual renewal, and writes a Notification log row for every notice (LEGAL #8:
-/// must be able to PROVE a notice was sent before any charge). Auto-renew is only permitted
-/// AFTER the advance notice was logged.
+/// B-01/G-1, FR-27/FR-32: delivers Pending notifications (lifecycle advance-notices created by
+/// <see cref="MembershipTrialExpiryService"/>, plus auction-close notices created at auction close).
+/// Email is a STUB here (logged, not SMTP); in-app is delivered by simply marking the row Sent so the
+/// member's notification feed can read it. On delivery we set Status=Sent + SentAtUtc.
 ///
-/// Idempotency: the filtered unique index UX_Notif_NoDup (UserId, Type, RelatedMembershipId,
-/// Milestone) guarantees a milestone notice is created at most once per membership, so this loop
-/// can re-run safely. The sweep uses IX_Membership_Expiry (S-03) to find expiring memberships fast.
-/// Skeleton — sweep loop only.
+/// Idempotency: we only pick rows whose Status = Pending and re-stamp them to Sent/Failed, so a re-run
+/// never re-delivers an already-Sent notice. Failures set Status=Failed (kept eligible for a future
+/// retry only if a separate policy re-opens them — we do NOT silently treat a failure as Sent, FR-32).
 /// </summary>
 public class NotificationDispatchService : BackgroundService
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
-    private static readonly int[] Milestones = { 14, 3, 1 }; // FR-27 advance-notice schedule (days before expiry)
+    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
+    private const int BatchSize = 200;
     private readonly IServiceProvider _services;
     private readonly ILogger<NotificationDispatchService> _logger;
 
@@ -34,35 +34,7 @@ public class NotificationDispatchService : BackgroundService
         {
             try
             {
-                using var scope = _services.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
-
-                var now = DateTime.UtcNow;
-                var horizon = now.AddDays(Milestones.Max()); // furthest milestone we look ahead to
-
-                // Live memberships whose trial/paid term expires within the notice horizon (IX_Membership_Expiry).
-                var expiring = await db.Memberships
-                    .Where(m =>
-                        (m.Status == MembershipStatus.Trial && m.TrialEndsAtUtc != null &&
-                         m.TrialEndsAtUtc > now && m.TrialEndsAtUtc <= horizon) ||
-                        (m.Status == MembershipStatus.Active && m.PaidThroughUtc != null &&
-                         m.PaidThroughUtc > now && m.PaidThroughUtc <= horizon))
-                    .Select(m => new { m.MembershipId, m.UserId, m.Status, m.TrialEndsAtUtc, m.PaidThroughUtc })
-                    .ToListAsync(stoppingToken);
-
-                var pending = await db.Notifications
-                    .CountAsync(n => n.Status == NotificationStatus.Pending && n.ScheduledForUtc <= now, stoppingToken);
-
-                // TODO (FR-27 / B-01): for each expiring membership and each milestone whose threshold
-                //   has been crossed, insert a Notification row (Type=TrialExpiring/RenewalDue,
-                //   Milestone=14/3/1, RelatedMembershipId=...) relying on UX_Notif_NoDup to dedupe;
-                //   then deliver Pending notices via the configured Channel (Email/InApp/Sms), set
-                //   Status=Sent + SentAtUtc on success / Failed otherwise, and write an AuditLog row.
-                //   Only after the notice is logged may MembershipTrialExpiryService run consented auto-renew.
-                if (expiring.Count > 0 || pending > 0)
-                    _logger.LogInformation(
-                        "NotificationDispatch: {Expiring} memberships in notice horizon, {Pending} pending notices (skeleton, not processed).",
-                        expiring.Count, pending);
+                await RunOnceAsync(stoppingToken);
             }
             catch (Exception ex)
             {
@@ -70,6 +42,68 @@ public class NotificationDispatchService : BackgroundService
             }
 
             await Task.Delay(Interval, stoppingToken);
+        }
+    }
+
+    /// <summary>One dispatch sweep: deliver due Pending notices and stamp Sent/Failed. Idempotent. Returns count delivered.</summary>
+    internal async Task<int> RunOnceAsync(CancellationToken ct)
+    {
+        using var scope = _services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+
+        var now = DateTime.UtcNow;
+
+        // Due, not-yet-sent notices (uses IX_Notif_Due: filtered on Status='Pending').
+        var due = await db.Notifications
+            .Where(n => n.Status == NotificationStatus.Pending && n.ScheduledForUtc <= now)
+            .OrderBy(n => n.ScheduledForUtc)
+            .Take(BatchSize)
+            .ToListAsync(ct);
+
+        var sent = 0;
+        foreach (var notice in due)
+        {
+            var ok = await DeliverAsync(notice, ct);
+            notice.Status = ok ? NotificationStatus.Sent : NotificationStatus.Failed;
+            if (ok)
+            {
+                notice.SentAtUtc = DateTime.UtcNow;
+                sent++;
+            }
+        }
+
+        if (due.Count > 0)
+            await db.SaveChangesAsync(ct);
+
+        if (due.Count > 0)
+            _logger.LogInformation("NotificationDispatch: delivered {Sent}/{Total} pending notices.", sent, due.Count);
+
+        return sent;
+    }
+
+    /// <summary>
+    /// Channel delivery. Email/SMS are stubbed (logged only — no SMTP/SMS provider wired in MVP); in-app is
+    /// a no-op success (the row itself IS the in-app message once Status=Sent). Returns true on success.
+    /// </summary>
+    private Task<bool> DeliverAsync(Notification notice, CancellationToken ct)
+    {
+        switch (notice.Channel)
+        {
+            case NotificationChannel.Email:
+                _logger.LogInformation(
+                    "[EMAIL stub] notice {Id} type={Type} milestone={Milestone} -> user {User} (membership {Membership}).",
+                    notice.NotificationId, notice.Type, notice.Milestone, notice.UserId, notice.RelatedMembershipId);
+                return Task.FromResult(true);
+
+            case NotificationChannel.Sms:
+                _logger.LogInformation("[SMS stub] notice {Id} type={Type} -> user {User}.",
+                    notice.NotificationId, notice.Type, notice.UserId);
+                return Task.FromResult(true);
+
+            case NotificationChannel.InApp:
+            default:
+                // In-app feed reads Sent notices directly; nothing external to call.
+                return Task.FromResult(true);
         }
     }
 }

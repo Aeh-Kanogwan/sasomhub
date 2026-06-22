@@ -1,3 +1,4 @@
+using Marketplace.Application.Auditing;
 using Marketplace.Application.Common;
 using Marketplace.Application.Credits;
 using Marketplace.Application.Referrals;
@@ -18,12 +19,14 @@ public sealed class ReferralService : IReferralService
     private readonly MarketplaceDbContext _db;
     private readonly ICreditService _credit;
     private readonly ConfigVersionResolver _config;
+    private readonly IAuditService _audit;
 
-    public ReferralService(MarketplaceDbContext db, ICreditService credit, ConfigVersionResolver config)
+    public ReferralService(MarketplaceDbContext db, ICreditService credit, ConfigVersionResolver config, IAuditService audit)
     {
         _db = db;
         _credit = credit;
         _config = config;
+        _audit = audit;
     }
 
     /// <summary>FR-28: link a new user to a referrer via code. A user can be referred only once; no self-referral.</summary>
@@ -107,13 +110,30 @@ public sealed class ReferralService : IReferralService
             if (!r.Succeeded) return r;
         }
 
+        var beforeStatus = referral.Status;
         referral.RewardCreditToReferrer = referrerAmount;
         referral.RewardCreditToReferred = referredAmount;
         referral.Status = ReferralStatus.Rewarded;
         referral.RewardedAtUtc = now;
-        await _db.SaveChangesAsync(ct);
 
-        // TODO(audit): write AuditLogs rows (FR-24) for the referral payout once the audit service exists.
+        // FR-24: audit the single-level payout decision (the credit grants themselves are also audited
+        // by CreditService). Same unit of work -> commits with the referral status flip.
+        _audit.Write(
+            action: "Referral.Reward",
+            entityType: "Referral",
+            entityId: referralId.ToString("N"),
+            actorUserId: null,
+            before: new { Status = beforeStatus.ToString() },
+            after: new
+            {
+                Status = ReferralStatus.Rewarded.ToString(),
+                referral.ReferrerUserId,
+                referral.ReferredUserId,
+                RewardReferrer = referrerAmount,
+                RewardReferred = referredAmount,
+            });
+
+        await _db.SaveChangesAsync(ct);
         return Result.Success();
     }
 
@@ -145,9 +165,27 @@ public sealed class ReferralService : IReferralService
         }
 
         referral.Status = ReferralStatus.Rejected;
+
+        // FR-24: audit the abuse clawback decision with the reason (the negative ledger rows are also
+        // audited per-row in RevokeOneAsync). Same unit of work -> commits with the Rejected flip.
+        _audit.Write(
+            action: "Referral.Revoke",
+            entityType: "Referral",
+            entityId: referralId.ToString("N"),
+            actorUserId: null,
+            after: new
+            {
+                Status = ReferralStatus.Rejected.ToString(),
+                referral.ReferrerUserId,
+                referral.ReferredUserId,
+                ClawbackReferrer = referral.RewardCreditToReferrer,
+                ClawbackReferred = referral.RewardCreditToReferred,
+                Reason = reason,
+            });
+
         await _db.SaveChangesAsync(ct);
 
-        // TODO(penalty): link to the penalty/blacklist flow (FR-15) and write AuditLogs (FR-24) with `reason`.
+        // TODO(penalty): link to the penalty/blacklist flow (FR-15).
         return Result.Success();
     }
 
@@ -192,6 +230,14 @@ public sealed class ReferralService : IReferralService
             BalanceAfter = newBalance,
             CreatedAtUtc = DateTime.UtcNow,
         });
+
+        // FR-24/FR-29: audit the clawback ledger row in the same transaction as the balance change.
+        _audit.Write(
+            action: $"Credit.{CreditTransactionType.Revoke}",
+            entityType: "CreditTransaction",
+            entityId: refId,
+            actorUserId: null,
+            after: new { UserId = userId, Amount = -amount, Type = CreditTransactionType.Revoke.ToString(), BalanceAfter = newBalance, RefId = refId });
 
         await _db.SaveChangesAsync(ct);
         if (tx is not null) await tx.CommitAsync(ct);

@@ -12,7 +12,7 @@ public class CreditServiceTests
         await using var db = TestDb.NewContext();
         var user = TestDb.AddUser(db);
         await db.SaveChangesAsync();
-        var svc = new CreditService(db);
+        var svc = new CreditService(db, TestDb.Audit(db));
 
         var result = await svc.GrantAsync(user.UserId, 100m, CreditTransactionType.ReferralReward, "Referral:1", null);
 
@@ -30,7 +30,7 @@ public class CreditServiceTests
         await using var db = TestDb.NewContext();
         var user = TestDb.AddUser(db);
         await db.SaveChangesAsync();
-        var svc = new CreditService(db);
+        var svc = new CreditService(db, TestDb.Audit(db));
 
         await svc.GrantAsync(user.UserId, 100m, CreditTransactionType.ReferralReward, "Referral:1", null);
         var second = await svc.GrantAsync(user.UserId, 100m, CreditTransactionType.ReferralReward, "Referral:1", null);
@@ -48,7 +48,7 @@ public class CreditServiceTests
         await using var db = TestDb.NewContext();
         var user = TestDb.AddUser(db);
         await db.SaveChangesAsync();
-        var svc = new CreditService(db);
+        var svc = new CreditService(db, TestDb.Audit(db));
         await svc.GrantAsync(user.UserId, 100m, CreditTransactionType.ReferralReward, "Referral:1", null);
 
         var spend1 = await svc.SpendAsync(user.UserId, 30m, "Promo:abc");
@@ -66,7 +66,7 @@ public class CreditServiceTests
         await using var db = TestDb.NewContext();
         var user = TestDb.AddUser(db);
         await db.SaveChangesAsync();
-        var svc = new CreditService(db);
+        var svc = new CreditService(db, TestDb.Audit(db));
         await svc.GrantAsync(user.UserId, 10m, CreditTransactionType.ReferralReward, "Referral:1", null);
 
         var spend = await svc.SpendAsync(user.UserId, 50m, "Promo:abc");
@@ -82,7 +82,7 @@ public class CreditServiceTests
         await using var db = TestDb.NewContext();
         var user = TestDb.AddUser(db);
         await db.SaveChangesAsync();
-        var svc = new CreditService(db);
+        var svc = new CreditService(db, TestDb.Audit(db));
         await svc.GrantAsync(user.UserId, 100m, CreditTransactionType.ReferralReward, "Referral:1", null);
 
         var expire = await svc.ExpireAsync(user.UserId, 40m, "ExpiryBatch:2026-06-17");
@@ -98,7 +98,7 @@ public class CreditServiceTests
         await using var db = TestDb.NewContext();
         var user = TestDb.AddUser(db);
         await db.SaveChangesAsync();
-        var svc = new CreditService(db);
+        var svc = new CreditService(db, TestDb.Audit(db));
 
         Assert.False((await svc.GrantAsync(user.UserId, 10m, CreditTransactionType.PromoSpend, "x", null)).Succeeded);
         Assert.False((await svc.GrantAsync(user.UserId, 0m, CreditTransactionType.ReferralReward, "x", null)).Succeeded);

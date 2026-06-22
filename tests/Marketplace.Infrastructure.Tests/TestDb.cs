@@ -1,8 +1,12 @@
+using Marketplace.Application.Auditing;
+using Marketplace.Application.Credits;
 using Marketplace.Domain.Entities;
 using Marketplace.Domain.Enums;
 using Marketplace.Infrastructure.Persistence;
+using Marketplace.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Marketplace.Infrastructure.Tests;
 
@@ -66,6 +70,23 @@ internal static class TestDb
         // under test resolve tiers/reason-codes from these lookups.
         db.Database.EnsureCreated();
         return db;
+    }
+
+    /// <summary>The real append-only audit writer over the InMemory context (FR-24). Stateless wrapper.</summary>
+    public static IAuditService Audit(MarketplaceDbContext db) => new AuditService(db);
+
+    /// <summary>
+    /// A minimal IServiceProvider whose scopes all resolve the SAME given DbContext (the InMemory store is
+    /// keyed by name, so sharing the instance keeps a worker sweep on the same data the test set up).
+    /// Provides the services a worker resolves inside its scope: DbContext, IAuditService, ICreditService.
+    /// </summary>
+    public static IServiceProvider WorkerServices(MarketplaceDbContext db)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(db);
+        services.AddScoped<IAuditService>(_ => new AuditService(db));
+        services.AddScoped<ICreditService>(_ => new CreditService(db, new AuditService(db)));
+        return services.BuildServiceProvider();
     }
 
     public static User AddUser(MarketplaceDbContext db, Guid? id = null)

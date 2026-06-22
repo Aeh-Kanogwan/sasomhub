@@ -39,8 +39,9 @@ public class AuctionCloserService : BackgroundService
                     .ToListAsync(stoppingToken);
 
                 // FR-12: close each due auction. AuctionService excludes shill bids, sets the winner +
-                // Status=Closed, and opens the no-touch transfer record (FR-18). Idempotent: a re-run
-                // on an already-Closed auction is a no-op. // TODO: notify parties + write AuditLog.
+                // Status=Closed, opens the no-touch transfer record (FR-18), notifies the winner/seller
+                // (Notification rows) and writes the append-only close AuditLog (FR-24). Idempotent: a
+                // re-run on an already-Closed auction is a no-op (no duplicate notice/audit).
                 var closed = 0;
                 foreach (var auctionId in due)
                 {

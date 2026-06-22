@@ -727,7 +727,7 @@ CREATE TABLE dbo.Notifications (
     CreatedAtUtc    DATETIME2(3)  NOT NULL CONSTRAINT DF_Notif_Created DEFAULT (SYSUTCDATETIME()),
     CONSTRAINT FK_Notif_User FOREIGN KEY (UserId) REFERENCES dbo.Users (UserId),
     CONSTRAINT FK_Notif_Membership FOREIGN KEY (RelatedMembershipId) REFERENCES dbo.Memberships (MembershipId),
-    CONSTRAINT CK_Notif_Type CHECK (Type IN ('TrialExpiring','RenewalDue','RenewalCharged','MembershipExpired','PromotionExpiring','PenaltyIssued','AppealUpdate')),
+    CONSTRAINT CK_Notif_Type CHECK (Type IN ('TrialExpiring','RenewalDue','RenewalCharged','MembershipExpired','PromotionExpiring','PenaltyIssued','AppealUpdate','AuctionWon','AuctionClosed')),
     CONSTRAINT CK_Notif_Channel CHECK (Channel IN ('Email','InApp','Sms')),
     CONSTRAINT CK_Notif_Status CHECK (Status IN ('Pending','Sent','Failed','Skipped')),
     CONSTRAINT CK_Notif_Milestone CHECK (Milestone IS NULL OR Milestone IN (14,3,1))

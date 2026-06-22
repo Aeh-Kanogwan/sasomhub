@@ -1,3 +1,4 @@
+using Marketplace.Application.Auditing;
 using Marketplace.Application.Common;
 using Marketplace.Application.Reputation;
 using Marketplace.Application.Trades;
@@ -25,12 +26,14 @@ public class TradeService : ITradeService
 {
     private readonly MarketplaceDbContext _db;
     private readonly ITrustScoreService _trustScore;
+    private readonly IAuditService _audit;
     private readonly ILogger<TradeService> _logger;
 
-    public TradeService(MarketplaceDbContext db, ITrustScoreService trustScore, ILogger<TradeService> logger)
+    public TradeService(MarketplaceDbContext db, ITrustScoreService trustScore, IAuditService audit, ILogger<TradeService> logger)
     {
         _db = db;
         _trustScore = trustScore;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -76,6 +79,15 @@ public class TradeService : ITradeService
             Note = "Deal opened (no-touch). Buyer to pay seller directly off-platform.",
             ChangedAtUtc = now
         });
+
+        // FR-24: audit the no-touch deal opening. AgreedAmount is reference-only — the platform never
+        // receives/holds funds (LEGAL #1), so this records a deal, not a money movement.
+        _audit.Write(
+            action: "Transaction.NoTouchOpened",
+            entityType: "Transaction",
+            entityId: tx.TransactionId.ToString("N"),
+            actorUserId: null, // opened by the auction-close worker / system
+            after: new { tx.TransactionId, tx.ProductId, tx.SellerId, tx.BuyerId, tx.WinningBidId, tx.AgreedAmount, Status = tx.Status.ToString() });
 
         await _db.SaveChangesAsync(ct);
         _logger.LogInformation("No-touch transaction {TxId} opened for product {ProductId}.", tx.TransactionId, productId);
@@ -146,6 +158,15 @@ public class TradeService : ITradeService
             product.Status = ProductStatus.Sold;
             product.UpdatedAtUtc = now;
         }
+
+        // FR-24: audit the buyer's receipt confirmation (deal completed, FR-19).
+        _audit.Write(
+            action: "Transaction.ReceiptConfirmed",
+            entityType: "Transaction",
+            entityId: tx.TransactionId.ToString("N"),
+            actorUserId: request.BuyerId,
+            before: new { Status = from },
+            after: new { Status = TransactionStatus.Confirmed.ToString(), tx.ConfirmedAtUtc });
 
         await _db.SaveChangesAsync(ct);
 
