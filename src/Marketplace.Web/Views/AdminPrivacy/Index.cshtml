@@ -1,0 +1,101 @@
+@using Marketplace.Application.Privacy
+@model IEnumerable<DataSubjectRequestDto>
+@{
+    ViewData["Title"] = "คำขอ PDPA (DSAR)";
+    var statusFilter = ViewBag.StatusFilter as string;
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / ผู้ดูแล / คำขอ PDPA</div>
+    <p class="eyebrow">◈ ADMIN · PDPA / DSAR</p>
+    <h1>คิวคำขอใช้สิทธิข้อมูลส่วนบุคคล</h1>
+    <p class="muted stack-md">เรียงตามวันครบกำหนด (เก่าสุดก่อน) — Export สร้างไฟล์, Erasure ปกปิดข้อมูลแต่คงแถวที่ต้องเก็บตามกฎหมาย</p>
+  </div>
+</div>
+
+<section class="section container">
+  @if (TempData["AdminOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["AdminError"] is string errMsg)
+  {
+    <div class="alert alert-info stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  <div class="stack-md" style="display:flex; gap:8px">
+    <a asp-action="Index" class="btn btn-ghost btn-sm @(string.IsNullOrEmpty(statusFilter) ? "active" : "")">ทั้งหมด</a>
+    <a asp-action="Index" asp-route-status="Pending" class="btn btn-ghost btn-sm">รอดำเนินการ</a>
+    <a asp-action="Index" asp-route-status="InProgress" class="btn btn-ghost btn-sm">กำลังดำเนินการ</a>
+    <a asp-action="Index" asp-route-status="Completed" class="btn btn-ghost btn-sm">เสร็จสิ้น</a>
+    <a asp-action="Index" asp-route-status="Rejected" class="btn btn-ghost btn-sm">ปฏิเสธ</a>
+  </div>
+
+  <div class="glass" style="padding:8px 0; overflow-x:auto; margin-top:16px">
+    <table style="width:100%; border-collapse:collapse">
+      <thead>
+        <tr class="muted tiny" style="text-align:left">
+          <th style="padding:10px 16px">ประเภท</th>
+          <th style="padding:10px 16px">สถานะ</th>
+          <th style="padding:10px 16px">ครบกำหนด</th>
+          <th style="padding:10px 16px">ยื่นเมื่อ</th>
+          <th style="padding:10px 16px">การดำเนินการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (!Model.Any())
+        {
+          <tr><td colspan="5" style="padding:16px" class="muted">ไม่มีคำขอ</td></tr>
+        }
+        @foreach (var r in Model)
+        {
+          <tr style="border-top:1px solid rgba(255,255,255,.06)">
+            <td style="padding:10px 16px">@r.RequestType</td>
+            <td style="padding:10px 16px">@r.Status</td>
+            <td style="padding:10px 16px">@r.DueByUtc.ToLocalTime().ToString("dd/MM/yyyy")</td>
+            <td style="padding:10px 16px">@r.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+            <td style="padding:10px 16px">
+              @if (r.Status != "Completed" && r.Status != "Rejected")
+              {
+                <div style="display:flex; gap:6px; flex-wrap:wrap">
+                  <form asp-action="Assign" method="post" style="display:inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="requestId" value="@r.DataSubjectRequestId" />
+                    <button type="submit" class="btn btn-ghost btn-sm">รับเรื่อง</button>
+                  </form>
+                  @if (r.RequestType == "Export" || r.RequestType == "Access")
+                  {
+                    <form asp-action="Export" method="post" style="display:inline">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="requestId" value="@r.DataSubjectRequestId" />
+                      <button type="submit" class="btn btn-primary btn-sm">สร้างไฟล์ข้อมูล</button>
+                    </form>
+                  }
+                  @if (r.RequestType == "Erasure")
+                  {
+                    <form asp-action="Erase" method="post" style="display:inline">
+                      @Html.AntiForgeryToken()
+                      <input type="hidden" name="requestId" value="@r.DataSubjectRequestId" />
+                      <button type="submit" class="btn btn-primary btn-sm">ลบ/ปกปิดข้อมูล</button>
+                    </form>
+                  }
+                  <form asp-action="Reject" method="post" style="display:inline; display:flex; gap:4px">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="requestId" value="@r.DataSubjectRequestId" />
+                    <input type="text" name="reason" class="input" placeholder="เหตุผล" style="width:120px" />
+                    <button type="submit" class="btn btn-ghost btn-sm">ปฏิเสธ</button>
+                  </form>
+                </div>
+              }
+              else
+              {
+                <span class="muted tiny">@(r.CompletedAtUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

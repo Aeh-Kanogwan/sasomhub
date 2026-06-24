@@ -1,0 +1,78 @@
+@using Marketplace.Application.Privacy
+@model IEnumerable<DataSubjectRequestDto>
+@{
+    ViewData["Title"] = "สิทธิข้อมูลส่วนบุคคล (PDPA)";
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb">หน้าแรก / สิทธิข้อมูลส่วนบุคคล</div>
+    <p class="eyebrow">◈ PRIVACY · PDPA</p>
+    <h1>คำขอใช้สิทธิข้อมูลส่วนบุคคล</h1>
+    <p class="muted stack-md">ยื่นคำขอเข้าถึง / ดาวน์โหลด / ลบข้อมูลของคุณ — ทีมงานจะดำเนินการภายใน 30 วัน</p>
+  </div>
+</div>
+
+<section class="section container">
+  @if (TempData["PrivacyOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["PrivacyError"] is string errMsg)
+  {
+    <div class="alert alert-info stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  <div class="glass stack-md" style="padding:24px">
+    <h2 class="tiny eyebrow">ยื่นคำขอใหม่</h2>
+    <form asp-action="Create" method="post" class="stack-md">
+      @Html.AntiForgeryToken()
+      <label class="muted tiny" for="requestType">ประเภทคำขอ</label>
+      <select id="requestType" name="requestType" class="input">
+        <option value="@DsarType.Export">ขอสำเนาข้อมูล (Export)</option>
+        <option value="@DsarType.Access">ขอเข้าถึงข้อมูล (Access)</option>
+        <option value="@DsarType.Erasure">ขอลบข้อมูล (Erasure)</option>
+        <option value="@DsarType.Rectify">ขอแก้ไขข้อมูล (Rectify)</option>
+        <option value="@DsarType.WithdrawConsent">ถอนความยินยอม (Withdraw Consent)</option>
+      </select>
+      <label class="muted tiny" for="note">หมายเหตุ (ถ้ามี)</label>
+      <textarea id="note" name="note" class="input" rows="2"></textarea>
+      <button type="submit" class="btn btn-primary btn-sm">ส่งคำขอ</button>
+    </form>
+  </div>
+
+  <div class="glass" style="padding:8px 0; overflow-x:auto; margin-top:16px">
+    <table style="width:100%; border-collapse:collapse">
+      <thead>
+        <tr class="muted tiny" style="text-align:left">
+          <th style="padding:10px 16px">ประเภท</th>
+          <th style="padding:10px 16px">สถานะ</th>
+          <th style="padding:10px 16px">ครบกำหนด</th>
+          <th style="padding:10px 16px">ยื่นเมื่อ</th>
+          <th style="padding:10px 16px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (!Model.Any())
+        {
+          <tr><td colspan="5" style="padding:16px" class="muted">ยังไม่มีคำขอ</td></tr>
+        }
+        @foreach (var r in Model)
+        {
+          <tr style="border-top:1px solid rgba(255,255,255,.06)">
+            <td style="padding:10px 16px">@r.RequestType</td>
+            <td style="padding:10px 16px">@r.Status</td>
+            <td style="padding:10px 16px">@r.DueByUtc.ToLocalTime().ToString("dd/MM/yyyy")</td>
+            <td style="padding:10px 16px">@r.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+            <td style="padding:10px 16px">
+              @if (r.Status == "Completed" && !string.IsNullOrEmpty(r.ResultArtifactPath))
+              {
+                <a asp-action="Download" asp-route-requestId="@r.DataSubjectRequestId" class="btn btn-ghost btn-sm">ดาวน์โหลด</a>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
