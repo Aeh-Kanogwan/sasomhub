@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Marketplace.Application.Kyc;
 using Marketplace.Application.Memberships;
 using Marketplace.Application.Payments;
 using Marketplace.Domain.Enums;
@@ -32,6 +33,7 @@ public class MembershipController : Controller
 
     private readonly IMembershipService _membershipService;
     private readonly IPaymentSlipService _paymentSlipService;
+    private readonly IKycService _kycService;
     private readonly MarketplaceDbContext _db;
     private readonly ConfigVersionResolver _config;
     private readonly IWebHostEnvironment _env;
@@ -40,6 +42,7 @@ public class MembershipController : Controller
     public MembershipController(
         IMembershipService membershipService,
         IPaymentSlipService paymentSlipService,
+        IKycService kycService,
         MarketplaceDbContext db,
         ConfigVersionResolver config,
         IWebHostEnvironment env,
@@ -47,6 +50,7 @@ public class MembershipController : Controller
     {
         _membershipService = membershipService;
         _paymentSlipService = paymentSlipService;
+        _kycService = kycService;
         _db = db;
         _config = config;
         _env = env;
@@ -186,6 +190,16 @@ public class MembershipController : Controller
     {
         if (!await OwnsMembershipAsync(membershipId, ct))
             return Forbid();
+
+        // FR-02/FR-06 (M2): a tier that RequiresKyc (Verified/Premium) may only be granted to a user with a
+        // current VERIFIED e-KYC. Gate here at the controller layer (no change to the shared MembershipService).
+        var targetTier = await _db.MembershipTiers.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.MembershipTierId == newTierId, ct);
+        if (targetTier is { RequiresKyc: true } && !await IsKycVerifiedAsync(ct))
+        {
+            TempData["MembershipError"] = "ระดับนี้ต้องยืนยันตัวตน (e-KYC) ก่อน กรุณาทำ KYC ให้สำเร็จแล้วลองอีกครั้ง";
+            return RedirectToAction(nameof(Index));
+        }
 
         var result = await _membershipService.UpgradeTierAsync(new UpgradeTierRequest(membershipId, newTierId), ct);
         if (!result.Succeeded)
@@ -367,6 +381,15 @@ public class MembershipController : Controller
         if (userId is null) return false;
         return await _db.Memberships.AsNoTracking()
             .AnyAsync(m => m.MembershipId == membershipId && m.UserId == userId.Value, ct);
+    }
+
+    /// <summary>M2 gate: true only if the signed-in user currently holds a VERIFIED (non-expired) e-KYC.</summary>
+    private async Task<bool> IsKycVerifiedAsync(CancellationToken ct)
+    {
+        var userId = GetUserId();
+        if (userId is null) return false;
+        var status = await _kycService.GetStatusAsync(userId.Value, ct);
+        return status.Succeeded && status.Value is { StatusCode: "VERIFIED" };
     }
 
     private Guid? GetUserId()
