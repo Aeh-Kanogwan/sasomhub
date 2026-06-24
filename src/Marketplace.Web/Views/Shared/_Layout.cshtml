@@ -54,6 +54,11 @@
       <li><a asp-controller="Listings" asp-action="Create" class="@Active("Listings")">ลงขายการ์ด</a></li>
       <li><a asp-controller="Membership" asp-action="Index" class="@Active("Membership")">สมาชิก</a></li>
       <li><a asp-controller="Credits" asp-action="Index" class="@Active("Credits")">เครดิต</a></li>
+      @if (isAuth)
+      {
+        <li><a asp-controller="Kyc" asp-action="Index" class="@Active("Kyc")">ยืนยันตัวตน (KYC)</a></li>
+        <li><a asp-controller="Disputes" asp-action="Index" class="@Active("Disputes")">ข้อพิพาทของฉัน</a></li>
+      }
       @if (User?.IsInRole("Admin") ?? false)
       {
         <li><a asp-controller="Admin" asp-action="Index" class="@Active("Admin")">ผู้ดูแล</a></li>
@@ -105,6 +110,8 @@
         <a asp-controller="Membership" asp-action="Index">แพ็กเกจสมาชิก</a>
         <a asp-controller="Credits" asp-action="Index">กระเป๋าเครดิต</a>
         <a asp-controller="Account" asp-action="Profile">โปรไฟล์</a>
+        <a asp-controller="Kyc" asp-action="Index">ยืนยันตัวตน (KYC)</a>
+        <a asp-controller="Disputes" asp-action="Index">ข้อพิพาทของฉัน</a>
       </div>
       <div>
         <h5>ช่วยเหลือ</h5>
