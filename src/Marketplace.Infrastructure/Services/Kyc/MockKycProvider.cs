@@ -8,14 +8,17 @@ namespace Marketplace.Infrastructure.Services.Kyc;
 /// LEGAL #2: a startup hard-guard forbids this provider in Production.
 ///
 /// Mock data is tagged so it is never mistaken for real proofing: ProviderKey="MOCK", the provider
-/// reference is prefixed "MOCK-", and the callback's RawStatus is "MOCK". (The KycSensitiveData entity
-/// has no IsMockData column, so the tag lives on the reference/raw-status — reported back to the lead dev.)
+/// reference is prefixed "MOCK-", and the callback's RawStatus is "MOCK". KycSensitiveData.IsMockData is
+/// also set by KycService so a prod purge sweep can remove sandbox rows.
 /// </summary>
 public sealed class MockKycProvider : IKycProvider
 {
     public const string ReferencePrefix = "MOCK-";
 
-    public string ProviderKey => "MOCK";
+    /// <summary>The provider key value emitted by the mock provider; used to tag KycSensitiveData.IsMockData.</summary>
+    public const string ProviderKeyValue = "MOCK";
+
+    public string ProviderKey => ProviderKeyValue;
 
     public Task<StartKycResult> InitiateAsync(StartKycRequest request, CancellationToken ct = default)
     {

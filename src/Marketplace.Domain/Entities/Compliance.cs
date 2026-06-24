@@ -104,6 +104,13 @@ public class NotificationDeliveryLog
     /// <summary>Masked recipient address — never the raw email/phone (PDPA data-minimisation).</summary>
     public string RecipientMasked { get; set; } = null!;
 
+    /// <summary>
+    /// Keyed HMAC-SHA256 fingerprint (hex) of the normalised recipient — lets us match the same
+    /// recipient across rows without storing PII (the pepper makes it non-reversible). NULL only for
+    /// legacy rows / when no pepper is configured. (M1: moved out of PayloadSnapshotJson into a column.)
+    /// </summary>
+    public string? RecipientHash { get; set; }
+
     /// <summary>Template identifier e.g. 'membership.renewal-due' so we know which message was sent.</summary>
     public string TemplateKey { get; set; } = null!;
 

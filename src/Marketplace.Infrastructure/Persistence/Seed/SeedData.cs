@@ -73,7 +73,11 @@ internal static class SeedData
             // authoritative value exists in schema/SRS yet. Adjust via a new ConfigVersion row when confirmed.
             new ConfigVersion { ConfigVersionId = 5, ConfigKey = "Referral.RewardCreditToReferrer",        Value = "100",  EffectiveFromUtc = ConfigBaselineEffective, CreatedByUserId = null, Note = "seed: PLACEHOLDER pending business sign-off (FR-28)", CreatedAtUtc = SeedTimestamp },
             new ConfigVersion { ConfigVersionId = 6, ConfigKey = "Referral.RewardCreditToReferred",        Value = "50",   EffectiveFromUtc = ConfigBaselineEffective, CreatedByUserId = null, Note = "seed: PLACEHOLDER pending business sign-off (FR-28)", CreatedAtUtc = SeedTimestamp },
-            new ConfigVersion { ConfigVersionId = 7, ConfigKey = "Referral.CreditExpiryDays",              Value = "365",  EffectiveFromUtc = ConfigBaselineEffective, CreatedByUserId = null, Note = "seed: PLACEHOLDER pending business sign-off (FR-28)", CreatedAtUtc = SeedTimestamp });
+            new ConfigVersion { ConfigVersionId = 7, ConfigKey = "Referral.CreditExpiryDays",              Value = "365",  EffectiveFromUtc = ConfigBaselineEffective, CreatedByUserId = null, Note = "seed: PLACEHOLDER pending business sign-off (FR-28)", CreatedAtUtc = SeedTimestamp },
+            // FR-07 / LEGAL #2: the appraisal-disclaimer version stamped onto every AppraisalOpinion. Seeding
+            // a real value ("v1") makes the resolver authoritative; without it AppraisalService falls back to
+            // its in-code DefaultDisclaimerVersion ("v0-default"). Bump via a new row when the wording changes.
+            new ConfigVersion { ConfigVersionId = 8, ConfigKey = "Disclaimer.AppraisalVersion",            Value = "v1",   EffectiveFromUtc = ConfigBaselineEffective, CreatedByUserId = null, Note = "seed: initial appraisal disclaimer version (FR-07, LEGAL #2)", CreatedAtUtc = SeedTimestamp });
     }
 
     // Static timestamp so migrations stay deterministic (HasData requires a constant, not SYSUTCDATETIME()).

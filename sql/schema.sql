@@ -70,6 +70,7 @@ CREATE TABLE dbo.Users (
     IsDeleted       BIT           NOT NULL CONSTRAINT DF_Users_IsDeleted DEFAULT (0),
     IsAnonymized    BIT           NOT NULL CONSTRAINT DF_Users_IsAnon DEFAULT (0),
     DeletedAtUtc    DATETIME2(3)  NULL,
+    AnonymizedAtUtc DATETIME2(3)  NULL,   -- M3 PDPA erasure instant (distinct from generic soft-delete DeletedAtUtc)
     CreatedAtUtc    DATETIME2(3)  NOT NULL CONSTRAINT DF_Users_Created DEFAULT (SYSUTCDATETIME()),
     UpdatedAtUtc    DATETIME2(3)  NOT NULL CONSTRAINT DF_Users_Updated DEFAULT (SYSUTCDATETIME()),
     RowVersion      ROWVERSION,
@@ -116,6 +117,7 @@ CREATE TABLE dbo.KycSensitiveData (
     KycVerificationId UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
     FullNameMasked  NVARCHAR(256) NULL,
     NationalIdHash  VARBINARY(64) NULL,
+    IsMockData      BIT           NOT NULL CONSTRAINT DF_KycSens_IsMock DEFAULT (0),  -- M2/LEGAL #2: sandbox data tag for prod purge
     RetentionExpiresAtUtc DATETIME2(3) NOT NULL,
     CreatedAtUtc    DATETIME2(3)  NOT NULL CONSTRAINT DF_KycSens_Created DEFAULT (SYSUTCDATETIME()),
     CONSTRAINT FK_KycSens_Kyc FOREIGN KEY (KycVerificationId)
@@ -807,6 +809,7 @@ CREATE TABLE dbo.NotificationDeliveryLog (
     ProviderMessageId   VARCHAR(200)  NULL,
     Channel             VARCHAR(20)   NOT NULL,
     RecipientMasked     VARCHAR(120)  NOT NULL,   -- masked; never raw PII
+    RecipientHash       VARCHAR(64)   NULL,        -- M1: keyed HMAC-SHA256 fingerprint (hex); match without PII
     TemplateKey         VARCHAR(80)   NOT NULL,
     TemplateVersion     VARCHAR(20)   NOT NULL,
     Status              VARCHAR(20)   NOT NULL CONSTRAINT DF_NotifDelivery_Status DEFAULT ('Queued'),
@@ -906,7 +909,10 @@ INSERT INTO dbo.ConfigVersions (ConfigKey, Value, EffectiveFromUtc, CreatedByUse
     ('Membership.TrialMonths',                 N'3',    '2020-01-01T00:00:00', NULL, N'seed: free-trial length (FR-27)'),
     ('Referral.RewardCreditToReferrer',        N'100',  '2020-01-01T00:00:00', NULL, N'seed: PLACEHOLDER pending business sign-off (FR-28)'),
     ('Referral.RewardCreditToReferred',        N'50',   '2020-01-01T00:00:00', NULL, N'seed: PLACEHOLDER pending business sign-off (FR-28)'),
-    ('Referral.CreditExpiryDays',              N'365',  '2020-01-01T00:00:00', NULL, N'seed: PLACEHOLDER pending business sign-off (FR-28)');
+    ('Referral.CreditExpiryDays',              N'365',  '2020-01-01T00:00:00', NULL, N'seed: PLACEHOLDER pending business sign-off (FR-28)'),
+    -- FR-07 / LEGAL #2: appraisal-disclaimer version stamped onto every AppraisalOpinion. Seeded so the
+    -- resolver is authoritative (else AppraisalService falls back to its in-code 'v0-default').
+    ('Disclaimer.AppraisalVersion',            N'v1',   '2020-01-01T00:00:00', NULL, N'seed: initial appraisal disclaimer version (FR-07, LEGAL #2)');
 GO
 
 /* ============================ 20. APPEND-ONLY ENFORCEMENT (B-06 / G-6) ====

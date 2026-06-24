@@ -16,16 +16,15 @@ namespace Marketplace.Infrastructure.Services.Privacy;
 /// mirrored to the append-only <see cref="AuditLog"/> (FR-24).
 ///
 /// IDENTITY-VERIFICATION STATE (PDPA: must verify the requester before fulfilling):
-/// the requested lifecycle is Submitted → IdentityVerified → InProgress → Completed/Rejected.
-/// The <see cref="DataSubjectRequestStatus"/> enum only exposes {Pending, InProgress, Completed,
-/// Rejected}, so this service maps:
-///   Submitted        => Status=Pending,  VerifiedAtUtc=null
-///   IdentityVerified => Status=Pending,  VerifiedAtUtc set  (a logged-in user is verified up front)
-///   InProgress       => Status=InProgress (admin claimed it)
-///   Completed        => Status=Completed
-///   Rejected         => Status=Rejected
-/// "Erased" has no dedicated enum value either, so a fulfilled erasure ends in Completed.
-/// (See the report note: enum lacks Submitted/IdentityVerified/Erased.)
+/// DECISION (Tech Lead): keep the 4-state <see cref="DataSubjectRequestStatus"/> {Pending, InProgress,
+/// Completed, Rejected}. Identity verification is modelled by the orthogonal <c>VerifiedAtUtc</c>
+/// timestamp (set/unset), not a separate enum value, and a fulfilled erasure ends in Completed — so
+/// extra IdentityVerified/Erased states would add CHECK-constraint + mapping churn with no behavioural
+/// gain. The mapping is therefore:
+///   Submitted (logged-in subject)  => Status=Pending,    VerifiedAtUtc set (verified up front)
+///   InProgress (admin claimed it)  => Status=InProgress
+///   Completed (incl. erasure done) => Status=Completed
+///   Rejected                       => Status=Rejected
 ///
 /// EXPORT writes the subject's OWN personal data to a JSON artifact on local storage and stores
 /// the path on the row (never the data inline). It excludes counterparties' PII, raw KYC data /
@@ -241,8 +240,9 @@ public sealed class DataSubjectRequestService : IDataSubjectRequestService
             user.EmailConfirmed = false;
             user.IsAnonymized = true;
             user.IsDeleted = true;
-            // NOTE: the User entity has DeletedAtUtc but NO dedicated AnonymizedAtUtc column (reported
-            // back to Tech Lead). We record the anonymize instant on DeletedAtUtc + in the audit row.
+            // PDPA erasure timestamp lives on its own column (distinct from generic soft-delete);
+            // DeletedAtUtc is also set so soft-delete filters keep working.
+            user.AnonymizedAtUtc = now;
             user.DeletedAtUtc = now;
             user.UpdatedAtUtc = now;
         }

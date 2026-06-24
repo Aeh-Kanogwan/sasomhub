@@ -14,18 +14,13 @@ namespace Marketplace.Infrastructure.Services.Notifications;
 /// on EVERY attempt — success or failure (LEGAL #8 evidence). Append-only: each attempt is a NEW row
 /// under the same <see cref="SendMessageRequest.CorrelationId"/> (never an UPDATE).
 ///
-/// PDPA: the log stores a MASKED recipient + a keyed HMAC fingerprint (RecipientHash) — never the raw
-/// email/phone. The rendered template VARIABLES are snapshotted (not the full HTML) so the exact
-/// message can be reconstructed from TemplateKey + TemplateVersion + variables.
+/// PDPA: the log stores a MASKED recipient + a keyed HMAC fingerprint in the first-class
+/// <see cref="NotificationDeliveryLog.RecipientHash"/> column — never the raw email/phone. The rendered
+/// template VARIABLES are snapshotted (not the full HTML) so the exact message can be reconstructed from
+/// TemplateKey + TemplateVersion + variables.
 /// </summary>
 internal sealed class NotificationSender : INotificationSender
 {
-    // Keys used inside PayloadSnapshotJson. NOTE (reported to TechLead): the NotificationDeliveryLog
-    // entity has no dedicated RecipientHash column, so PDPA's HMAC fingerprint is embedded here under
-    // "__recipientHash" until a first-class column is added. Variables live under "vars".
-    private const string HashKey = "__recipientHash";
-    private const string VarsKey = "vars";
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
@@ -92,12 +87,13 @@ internal sealed class NotificationSender : INotificationSender
             ProviderMessageId = result.ProviderMessageId,
             Channel = deliveryChannel,
             RecipientMasked = masked,
+            RecipientHash = recipientHash,
             TemplateKey = request.TemplateKey,
             TemplateVersion = request.TemplateVersion,
             Status = result.Accepted ? DeliveryStatus.Sent : DeliveryStatus.Failed,
             ErrorDetail = Truncate(result.Error),
             AttemptCount = 0,
-            PayloadSnapshotJson = BuildSnapshot(request.Variables, recipientHash),
+            PayloadSnapshotJson = BuildSnapshot(request.Variables),
             CorrelationId = request.CorrelationId,
             SentAtUtc = result.Accepted ? now : null,
             CreatedAtUtc = now,
@@ -130,15 +126,8 @@ internal sealed class NotificationSender : INotificationSender
         return (subject, body);
     }
 
-    private static string BuildSnapshot(IReadOnlyDictionary<string, string> variables, string recipientHash)
-    {
-        var snapshot = new Dictionary<string, object>
-        {
-            [HashKey] = recipientHash,
-            [VarsKey] = variables,
-        };
-        return JsonSerializer.Serialize(snapshot, JsonOptions);
-    }
+    private static string BuildSnapshot(IReadOnlyDictionary<string, string> variables)
+        => JsonSerializer.Serialize(variables, JsonOptions);
 
     private string ProviderKeyFor(SendChannel channel) => channel == SendChannel.Email
         ? _options.EmailProvider.ToString()

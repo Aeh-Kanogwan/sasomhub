@@ -163,6 +163,10 @@ public sealed class KycService : IKycService
                 };
                 verification.SensitiveData.FullNameMasked = callback.FullNameMasked;
                 verification.SensitiveData.NationalIdHash = nationalIdHash;
+                // LEGAL #2: tag sandbox data (ProviderKey=MOCK) so a prod purge sweep can remove it and it
+                // is never mistaken for real proofing. Real NDID verifications stay IsMockData=false.
+                verification.SensitiveData.IsMockData =
+                    string.Equals(_provider.ProviderKey, MockKycProvider.ProviderKeyValue, StringComparison.OrdinalIgnoreCase);
                 // Retention: verify-time + configured window. TODO(legal/DPO): confirm real period (tie to membership lifetime).
                 verification.SensitiveData.RetentionExpiresAtUtc = now.AddDays(_options.SensitiveDataRetentionDays);
             }

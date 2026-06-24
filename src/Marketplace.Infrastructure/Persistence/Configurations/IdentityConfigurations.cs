@@ -25,6 +25,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.CreatedAtUtc).HasColumnType("datetime2(3)").HasDefaultValueSql("SYSUTCDATETIME()");
         b.Property(x => x.UpdatedAtUtc).HasColumnType("datetime2(3)").HasDefaultValueSql("SYSUTCDATETIME()");
         b.Property(x => x.DeletedAtUtc).HasColumnType("datetime2(3)");
+        // M3 PDPA erasure timestamp (distinct from generic soft-delete DeletedAtUtc).
+        b.Property(x => x.AnonymizedAtUtc).HasColumnType("datetime2(3)");
         b.Property(x => x.RowVersion).IsRowVersion();
         // Filtered unique email (supports anonymize/re-register) — UX_Users_NormalizedEmail WHERE IsDeleted=0
         b.HasIndex(x => x.NormalizedEmail).IsUnique()
@@ -88,6 +90,8 @@ public class KycSensitiveDataConfiguration : IEntityTypeConfiguration<KycSensiti
         b.Property(x => x.KycVerificationId).ValueGeneratedNever();
         b.Property(x => x.FullNameMasked).HasMaxLength(256);          // [ENCRYPTED] at deploy
         b.Property(x => x.NationalIdHash).HasColumnType("varbinary(64)"); // [ENCRYPTED] hash
+        // M2/LEGAL #2: flag sandbox/mock data so a prod purge sweep can remove it. Defaults to 0 (real).
+        b.Property(x => x.IsMockData).HasDefaultValue(false);
         b.Property(x => x.RetentionExpiresAtUtc).HasColumnType("datetime2(3)").IsRequired();
         b.Property(x => x.CreatedAtUtc).HasColumnType("datetime2(3)").HasDefaultValueSql("SYSUTCDATETIME()");
         b.HasOne(x => x.KycVerification).WithOne(x => x.SensitiveData)

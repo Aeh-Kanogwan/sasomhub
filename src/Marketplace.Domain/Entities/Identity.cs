@@ -18,6 +18,9 @@ public class User
     public bool IsDeleted { get; set; }
     public bool IsAnonymized { get; set; }
     public DateTime? DeletedAtUtc { get; set; }
+    /// <summary>PDPA erasure timestamp (M3): when the account's PII was anonymized/tokenised, distinct from
+    /// the generic soft-delete <see cref="DeletedAtUtc"/>. NULL until an Erasure DSAR is fulfilled.</summary>
+    public DateTime? AnonymizedAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public byte[] RowVersion { get; set; } = null!;
@@ -72,6 +75,9 @@ public class KycSensitiveData
     public Guid KycVerificationId { get; set; }
     public string? FullNameMasked { get; set; }       // [ENCRYPTED]
     public byte[]? NationalIdHash { get; set; }        // [ENCRYPTED] hash, not raw number
+    /// <summary>M2/LEGAL #2: true when produced by the Mock KYC provider (ProviderKey=MOCK), so a prod
+    /// purge sweep can delete sandbox data that must never be mistaken for real proofing. Real NDID = false.</summary>
+    public bool IsMockData { get; set; }
     public DateTime RetentionExpiresAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 

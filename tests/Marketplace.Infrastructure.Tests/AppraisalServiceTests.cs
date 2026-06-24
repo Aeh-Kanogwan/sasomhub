@@ -68,6 +68,15 @@ public class AppraisalServiceTests
     {
         await using var db = TestDb.NewContext();
         var productId = await SeedProductAsync(db);
+
+        // The baseline seed now ships a Disclaimer.AppraisalVersion row; remove it so this test genuinely
+        // exercises the "key unset" in-code fallback path (AppraisalService.DefaultDisclaimerVersion).
+        var seeded = await db.ConfigVersions
+            .Where(c => c.ConfigKey == AppraisalService.DisclaimerConfigKey)
+            .ToListAsync();
+        db.ConfigVersions.RemoveRange(seeded);
+        await db.SaveChangesAsync();
+
         var svc = Build(db);
 
         var result = await svc.CreateAsync(

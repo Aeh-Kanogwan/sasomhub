@@ -126,6 +126,8 @@ public class NotificationDeliveryLogConfiguration : IEntityTypeConfiguration<Not
         b.Property(x => x.ProviderMessageId).HasColumnType("varchar(200)");
         b.Property(x => x.Channel).HasConversion<string>().HasColumnType("varchar(20)").IsRequired();
         b.Property(x => x.RecipientMasked).HasColumnType("varchar(120)").IsRequired();
+        // M1: keyed HMAC fingerprint (hex) of the recipient — match without storing PII. NULL = no pepper.
+        b.Property(x => x.RecipientHash).HasColumnType("varchar(64)");
         b.Property(x => x.TemplateKey).HasColumnType("varchar(80)").IsRequired();
         b.Property(x => x.TemplateVersion).HasColumnType("varchar(20)").IsRequired();
         b.Property(x => x.Status).HasConversion<string>().HasColumnType("varchar(20)")

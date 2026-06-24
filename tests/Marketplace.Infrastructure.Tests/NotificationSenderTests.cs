@@ -142,15 +142,17 @@ public class NotificationSenderTests
         await sut.SendAsync(EmailReq("alice@gmail.com"));
 
         var log = Assert.Single(db.NotificationDeliveryLogs);
-        Assert.NotNull(log.PayloadSnapshotJson);
-        Assert.DoesNotContain("alice@gmail.com", log.PayloadSnapshotJson);
 
-        using var doc = JsonDocument.Parse(log.PayloadSnapshotJson!);
-        var hash = doc.RootElement.GetProperty("__recipientHash").GetString();
+        // HMAC fingerprint now lives in the first-class RecipientHash column (never raw PII).
         // Deterministic keyed HMAC-SHA256 hex (64 chars) over the normalised recipient.
         var expected = RecipientPrivacyTestProbe.Hash("alice@gmail.com", opts.RecipientHashPepper);
-        Assert.Equal(expected, hash);
-        Assert.True(doc.RootElement.GetProperty("vars").TryGetProperty("days", out _));
+        Assert.Equal(expected, log.RecipientHash);
+
+        // PayloadSnapshotJson now holds ONLY the rendered template variables (no PII, no recipient hash).
+        Assert.NotNull(log.PayloadSnapshotJson);
+        Assert.DoesNotContain("alice@gmail.com", log.PayloadSnapshotJson);
+        using var doc = JsonDocument.Parse(log.PayloadSnapshotJson!);
+        Assert.True(doc.RootElement.TryGetProperty("days", out _));
     }
 
     [Fact]
