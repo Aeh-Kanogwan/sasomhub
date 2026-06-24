@@ -1,0 +1,157 @@
+@model Marketplace.Application.Kyc.KycStatusDto?
+@{
+    ViewData["Title"] = "ยืนยันตัวตน (e-KYC)";
+
+    // M2 (FR-02/FR-06): status drives Verified/Premium tier eligibility.
+    // KycStatusDto.StatusCode comes from the KycStatus state machine:
+    //   NONE / INITIATED / PENDING / VERIFIED / REJECTED / EXPIRED.
+    // When Model is null the user has never started (or status read failed -> TempData["KycError"]).
+    var code = (Model?.StatusCode ?? "NONE").ToUpperInvariant();
+    var err = TempData["KycError"] as string;
+    var ok = TempData["KycOk"] as string;
+
+    // map state -> (badge class, Thai label, short explanation)
+    (string badge, string label, string note) StateInfo() => code switch
+    {
+        "VERIFIED" => ("badge-verified", "ยืนยันแล้ว", "บัญชีของคุณผ่านการยืนยันตัวตนแล้ว สามารถอัปเกรดเป็น Verified / Premium ได้"),
+        "INITIATED" => ("badge-active", "กำลังดำเนินการ", "ส่งคำขอไปยังผู้ให้บริการ NDID แล้ว — ทำตามขั้นตอนบนแอปธนาคาร/NDID ของคุณให้ครบ"),
+        "PENDING" => ("badge-active", "รอผลตรวจสอบ", "ผู้ให้บริการกำลังตรวจสอบข้อมูลของคุณ สถานะจะอัปเดตอัตโนมัติเมื่อมีผล"),
+        "REJECTED" => ("badge-expired", "ไม่ผ่านการยืนยัน", "การยืนยันไม่สำเร็จ คุณสามารถเริ่มกระบวนการใหม่ได้อีกครั้ง"),
+        "EXPIRED" => ("badge-expired", "หมดอายุ", "การยืนยันตัวตนหมดอายุแล้ว กรุณายืนยันใหม่เพื่อคงสิทธิ์ Verified / Premium"),
+        _ => ("badge-trial", "ยังไม่เริ่ม", "คุณยังไม่ได้ยืนยันตัวตน — ยืนยันเพื่อปลดล็อกสมาชิก Verified และ Premium"),
+    };
+    var (badgeClass, stateLabel, stateNote) = StateInfo();
+
+    var canStart = code is "NONE" or "REJECTED" or "EXPIRED";
+    var isPending = code is "INITIATED" or "PENDING";
+    var levelLabel = Model?.VerificationLevel switch { 2 => "Verified", 3 => "Premium", _ => null };
+}
+
+@* ===== Page head ===== *@
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / ยืนยันตัวตน</div>
+  <p class="eyebrow">◈ E-KYC · NDID</p>
+  <h1>ยืนยัน<span class="gradient-text">ตัวตน</span></h1>
+  <p class="muted stack-md" style="max-width:640px">การยืนยันตัวตนแบบดิจิทัลผ่าน NDID เป็นเงื่อนไขสำหรับสมาชิกระดับ Verified และ Premium เพื่อความปลอดภัยของชุมชนนักสะสม</p>
+</section>
+
+@if (!string.IsNullOrEmpty(ok))
+{
+  <section class="container"><div class="alert alert-info" role="status"><span>✅</span><div>@ok</div></div></section>
+}
+@if (!string.IsNullOrEmpty(err))
+{
+  <section class="container"><div class="alert alert-danger" role="alert"><span>⚠️</span><div>@err</div></div></section>
+}
+
+@* ===== Current status card ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">STATUS · FR-02</p><h2 style="font-size:24px">สถานะการยืนยัน</h2></div>
+      <span class="badge @badgeClass">@stateLabel</span>
+    </div>
+    <p class="muted">@stateNote</p>
+
+    @if (Model is not null)
+    {
+      <div class="stack-md">
+        @if (!string.IsNullOrEmpty(levelLabel))
+        {
+          <div class="spec"><span class="k">ระดับที่ขอ</span><span class="v">@levelLabel</span></div>
+        }
+        @if (Model.VerifiedAtUtc.HasValue)
+        {
+          <div class="spec"><span class="k">ยืนยันเมื่อ</span><span class="v mono">@Model.VerifiedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span></div>
+        }
+        @if (Model.ExpiresAtUtc.HasValue)
+        {
+          <div class="spec"><span class="k">หมดอายุ</span><span class="v mono">@Model.ExpiresAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd")</span></div>
+        }
+      </div>
+    }
+
+    @if (isPending)
+    {
+      <div class="alert alert-info stack-md"><span>⏳</span><div>คำขอของคุณอยู่ระหว่างดำเนินการ หน้านี้จะแสดงผลล่าสุดเมื่อรีเฟรช — โปรดทำตามขั้นตอนในแอป NDID ให้เสร็จ</div></div>
+      <a asp-action="Index" class="btn btn-ghost btn-sm stack-md">รีเฟรชสถานะ</a>
+    }
+  </div>
+</section>
+
+@* ===== PDPA consent + start (LEGAL #4 / FR-02-03) — only when the user can (re)start ===== *@
+@if (canStart)
+{
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="glass" style="padding:24px">
+      <div class="section-head" style="margin-bottom:var(--stack-md)">
+        <div><p class="eyebrow">PDPA · ความยินยอม</p><h2 style="font-size:24px">ก่อนเริ่มยืนยันตัวตน</h2></div>
+      </div>
+
+      <p class="muted stack-sm">โปรดอ่านและให้ความยินยอมก่อนเริ่มกระบวนการ — เราเก็บข้อมูลเท่าที่จำเป็นและไม่จัดเก็บภาพบัตร/เลขบัตรประชาชนแบบดิบ</p>
+
+      <div class="glass-soft" style="padding:18px; margin:var(--stack-md) 0">
+        <div class="spec"><span class="k">เก็บข้อมูลอะไร</span><span class="v">สถานะการยืนยัน, รหัสอ้างอิงจากผู้ให้บริการ, ชื่อแบบปิดบางส่วน และค่าแฮชเลขบัตร (ไม่เก็บภาพ/เลขบัตรแบบดิบ)</span></div>
+        <div class="spec"><span class="k">วัตถุประสงค์</span><span class="v">เพื่อยืนยันตัวตนสำหรับสมาชิกระดับ Verified / Premium และป้องกันการสวมรอย</span></div>
+        <div class="spec"><span class="k">ส่งให้ใคร</span><span class="v">ส่งคำขอยืนยันตัวตนไปยังผู้ให้บริการ NDID เพื่อพิสูจน์ตัวตนแบบดิจิทัล</span></div>
+        <div class="spec"><span class="k">ใครเห็นข้อมูล</span><span class="v">ทีมงานที่เกี่ยวข้องเท่าที่จำเป็น และระบบจะบันทึกการเข้าถึงทุกครั้ง (audit)</span></div>
+        <div class="spec"><span class="k">ระยะเก็บรักษา</span><span class="v">เก็บภายในระยะเวลาที่กำหนด และลบ/ทำให้ไม่สามารถระบุตัวตนเมื่อพ้นกำหนด</span></div>
+      </div>
+
+      <div class="alert alert-info" role="note"><span>ℹ️</span><div>การยืนยันตัวตนผ่าน NDID ดำเนินการโดยผู้ให้บริการภายนอก คุณสามารถขอใช้สิทธิ์ของเจ้าของข้อมูล (เช่น ขอเข้าถึง/ลบ) ได้ตามที่กฎหมายกำหนด</div></div>
+
+      <form asp-action="Start" method="post" id="kycStartForm" class="stack-md">
+        @Html.AntiForgeryToken()
+
+        <label class="eyebrow">ระดับที่ต้องการยืนยัน</label>
+        <select name="targetLevel" class="select" style="margin-bottom:var(--stack-md)">
+          <option value="Verified">Verified — สมาชิกยืนยันตัวตน</option>
+          <option value="Premium">Premium — สิทธิ์ขั้นสูงสุด</option>
+        </select>
+
+        <label class="flex gap-sm" style="align-items:flex-start; cursor:pointer">
+          <input type="checkbox" id="kycConsent" required />
+          <span class="muted tiny">ข้าพเจ้าได้อ่านและยินยอมให้เก็บ ใช้ และส่งต่อข้อมูลข้างต้นแก่ผู้ให้บริการ NDID เพื่อวัตถุประสงค์ในการยืนยันตัวตน (PDPA)</span>
+        </label>
+
+        <button type="submit" class="btn btn-buy stack-md">เริ่มยืนยันตัวตนกับ NDID</button>
+      </form>
+    </div>
+  </section>
+}
+
+@* ===== Link back to membership upgrade ===== *@
+<section class="container" style="margin-bottom:var(--stack-lg)">
+  <div class="alert @(code == "VERIFIED" ? "alert-info" : "alert-warn")">
+    <span>@(code == "VERIFIED" ? "✅" : "🔒")</span>
+    <div>
+      @if (code == "VERIFIED")
+      {
+        <text>คุณยืนยันตัวตนเรียบร้อยแล้ว — ไปที่หน้าสมาชิกเพื่ออัปเกรดเป็น Verified หรือ Premium ได้เลย</text>
+      }
+      else
+      {
+        <text>สมาชิกระดับ Verified และ Premium ต้องยืนยันตัวตนให้สำเร็จก่อน เมื่อยืนยันแล้วจึงจะอัปเกรดได้</text>
+      }
+      <div class="stack-sm"><a asp-controller="Membership" asp-action="Index" class="btn btn-ghost btn-sm">ไปหน้าแพ็กเกจสมาชิก →</a></div>
+    </div>
+  </div>
+</section>
+
+@section Scripts {
+  <script>
+    // Guard: do not POST Start until the PDPA consent box is ticked (defense-in-depth; the box is also `required`).
+    (function () {
+      var form = document.getElementById('kycStartForm');
+      var consent = document.getElementById('kycConsent');
+      if (form && consent) {
+        form.addEventListener('submit', function (e) {
+          if (!consent.checked) {
+            e.preventDefault();
+            consent.focus();
+          }
+        });
+      }
+    })();
+  </script>
+}

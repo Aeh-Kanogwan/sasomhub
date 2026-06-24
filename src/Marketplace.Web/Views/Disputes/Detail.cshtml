@@ -4,34 +4,85 @@
     var d = Model.Dispute;
     var result = TempData["DisputeResult"] as string;
     var message = TempData["DisputeMessage"] as string;
+
+    (string cls, string label, string note) StatusInfo(string status) => status switch
+    {
+        "Open" => ("badge-trial", "เปิดเรื่อง", "เปิดเรื่องแล้ว รอทีมงานรับเรื่องเพื่อตรวจสอบ"),
+        "UnderReview" => ("badge-active", "กำลังตรวจสอบ", "ทีมงานกำลังตรวจสอบข้อมูลและไกล่เกลี่ยระหว่างคู่ค้า"),
+        "Resolved" => ("badge-verified", "ไกล่เกลี่ยแล้ว", "การไกล่เกลี่ยเสร็จสิ้น ดูผลด้านล่าง"),
+        "Rejected" => ("badge-expired", "ไม่รับเรื่อง", "ข้อพิพาทนี้ไม่เข้าเงื่อนไขการรับเรื่อง"),
+        "Escalated" => ("badge-active", "ส่งต่อพิจารณา", "เรื่องถูกส่งต่อให้ผู้มีอำนาจพิจารณาเพิ่มเติม"),
+        _ => ("badge-trial", status, ""),
+    };
+    var (cls, label, note) = StatusInfo(d.Status);
 }
 
+@* ===== Page head ===== *@
 <section class="container page-head">
   <div class="breadcrumb">หน้าแรก / ข้อพิพาท / รายละเอียด</div>
-  <h1>รายละเอียดข้อพิพาท</h1>
+  <p class="eyebrow">◈ DISPUTE · FR-21</p>
+  <h1>รายละเอียด<span class="gradient-text">ข้อพิพาท</span></h1>
 </section>
 
 @if (!string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(message))
 {
-    <section class="container" style="margin-bottom:var(--stack-md)">
-      <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
-        <div>@message</div>
-      </div>
-    </section>
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
+      <span>@(result == "ok" ? "✅" : "⚠️")</span><div>@message</div>
+    </div>
+  </section>
 }
 
-<section class="container">
-  <dl>
-    <dt>รหัสข้อพิพาท</dt><dd>@d.DisputeId</dd>
-    <dt>รหัสธุรกรรม</dt><dd>@d.TransactionId</dd>
-    <dt>สถานะ</dt><dd>@d.Status</dd>
-    <dt>รายละเอียด</dt><dd>@(string.IsNullOrEmpty(d.Description) ? "—" : d.Description)</dd>
-    <dt>ผลการไกล่เกลี่ย</dt><dd>@(string.IsNullOrEmpty(d.Resolution) ? "ยังไม่มีผล" : d.Resolution)</dd>
-    <dt>เปิดเมื่อ</dt><dd>@d.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</dd>
+@* ===== Status banner ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">สถานะ</p><h2 style="font-size:24px">ความคืบหน้า</h2></div>
+      <span class="badge @cls">@label</span>
+    </div>
+    @if (!string.IsNullOrEmpty(note)) { <p class="muted">@note</p> }
+  </div>
+</section>
+
+@* ===== Details ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="spec"><span class="k">รหัสข้อพิพาท</span><span class="v mono">@d.DisputeId.ToString("N").Substring(0, 12).ToUpperInvariant()</span></div>
+    <div class="spec"><span class="k">รหัสธุรกรรม</span><span class="v mono">#@d.TransactionId.ToString("N").Substring(0, 8).ToUpperInvariant()</span></div>
+    <div class="spec"><span class="k">รายละเอียด</span><span class="v" style="font-family:inherit; text-align:right; max-width:60%">@(string.IsNullOrEmpty(d.Description) ? "—" : d.Description)</span></div>
+    <div class="spec"><span class="k">เปิดเมื่อ</span><span class="v mono">@d.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span></div>
     @if (d.ResolvedAtUtc is not null)
     {
-        <dt>ปิดเมื่อ</dt><dd>@d.ResolvedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</dd>
+      <div class="spec"><span class="k">ปิดเรื่องเมื่อ</span><span class="v mono">@d.ResolvedAtUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span></div>
     }
-  </dl>
-  <a asp-action="Index">กลับไปรายการข้อพิพาท</a>
+  </div>
+</section>
+
+@* ===== Mediation result ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="glass" style="padding:24px">
+    <div class="section-head" style="margin-bottom:var(--stack-md)">
+      <div><p class="eyebrow">ผลการไกล่เกลี่ย</p><h2 style="font-size:24px">ผลการพิจารณา</h2></div>
+    </div>
+    @if (string.IsNullOrEmpty(d.Resolution))
+    {
+      <p class="muted">ยังไม่มีผลการไกล่เกลี่ย — ทีมงานจะแจ้งเมื่อพิจารณาเสร็จ</p>
+    }
+    else
+    {
+      <div class="glass-soft" style="padding:18px">@d.Resolution</div>
+    }
+  </div>
+</section>
+
+@* ===== No-touch reminder (LEGAL #1) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-info">
+    <span>ℹ️</span>
+    <div>ผลการไกล่เกลี่ยเป็นข้อเสนอแนะของคนกลาง แพลตฟอร์มไม่จ่ายและไม่คืนเงินผ่านระบบ</div>
+  </div>
+</section>
+
+<section class="container" style="margin-bottom:var(--stack-lg)">
+  <a asp-action="Index" class="btn btn-ghost btn-sm">← กลับไปรายการข้อพิพาท</a>
 </section>

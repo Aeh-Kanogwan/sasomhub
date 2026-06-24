@@ -3,44 +3,74 @@
     ViewData["Title"] = "ข้อพิพาทของฉัน";
     var result = TempData["DisputeResult"] as string;
     var message = TempData["DisputeMessage"] as string;
+
+    // FR-21: map the dispute status string -> Neon Vault badge class + Thai label.
+    (string cls, string label) StatusBadge(string status) => status switch
+    {
+        "Open" => ("badge-trial", "เปิดเรื่อง"),
+        "UnderReview" => ("badge-active", "กำลังตรวจสอบ"),
+        "Resolved" => ("badge-verified", "ไกล่เกลี่ยแล้ว"),
+        "Rejected" => ("badge-expired", "ไม่รับเรื่อง"),
+        "Escalated" => ("badge-active", "ส่งต่อพิจารณา"),
+        _ => ("badge-trial", status),
+    };
 }
 
+@* ===== Page head ===== *@
 <section class="container page-head">
   <div class="breadcrumb">หน้าแรก / ข้อพิพาท</div>
-  <h1>ข้อพิพาทของฉัน</h1>
+  <p class="eyebrow">◈ DISPUTES · FR-21</p>
+  <h1>ข้อพิพาท<span class="gradient-text">ของฉัน</span></h1>
+  <p class="muted stack-md" style="max-width:620px">ดูสถานะและผลการไกล่เกลี่ยของข้อพิพาทที่คุณเปิดหรือที่เกี่ยวข้องกับธุรกรรมของคุณ — แพลตฟอร์มทำหน้าที่เป็นคนกลางบันทึกและตรวจสอบเท่านั้น</p>
 </section>
 
 @if (!string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(message))
 {
-    <section class="container" style="margin-bottom:var(--stack-md)">
-      <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
-        <div>@message</div>
-      </div>
-    </section>
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
+      <span>@(result == "ok" ? "✅" : "⚠️")</span><div>@message</div>
+    </div>
+  </section>
 }
 
-<section class="container">
+@* ===== Mediation-only reminder (LEGAL #1) ===== *@
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-warn">
+    <span>⚖️</span>
+    <div><strong>การไกล่เกลี่ยเท่านั้น</strong> — ระบบไม่มีการจ่ายหรือคืนเงิน เป็นเพียงการบันทึกและตรวจสอบข้อพิพาทระหว่างคู่ค้า</div>
+  </div>
+</section>
+
+@* ===== List ===== *@
+<section class="section container" style="padding-top:0">
   @if (Model.Disputes.Count == 0)
   {
-      <p>ยังไม่มีข้อพิพาท</p>
+    <div class="glass" style="padding:40px; text-align:center">
+      <div style="font-size:40px; margin-bottom:12px">🕊️</div>
+      <h2 style="font-size:22px">ยังไม่มีข้อพิพาท</h2>
+      <p class="muted stack-sm">เมื่อเกิดปัญหากับธุรกรรม คุณสามารถเปิดข้อพิพาทได้จากหน้ารายละเอียดธุรกรรมของคุณ</p>
+    </div>
   }
   else
   {
-      <table class="table">
+    <div class="glass" style="padding:8px 18px 18px; overflow-x:auto">
+      <table class="mono-table">
         <thead>
           <tr><th>รหัสธุรกรรม</th><th>สถานะ</th><th>เปิดเมื่อ</th><th></th></tr>
         </thead>
         <tbody>
           @foreach (var d in Model.Disputes)
           {
-              <tr>
-                <td>@d.TransactionId.ToString("N").Substring(0, 8)</td>
-                <td>@d.Status</td>
-                <td>@d.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                <td><a asp-action="Detail" asp-route-id="@d.DisputeId">ดูรายละเอียด</a></td>
-              </tr>
+            var (cls, label) = StatusBadge(d.Status);
+            <tr>
+              <td class="mono">#@d.TransactionId.ToString("N").Substring(0, 8).ToUpperInvariant()</td>
+              <td><span class="badge @cls">@label</span></td>
+              <td>@d.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+              <td style="text-align:right"><a asp-action="Detail" asp-route-id="@d.DisputeId" class="btn btn-ghost btn-sm">ดูรายละเอียด →</a></td>
+            </tr>
           }
         </tbody>
       </table>
+    </div>
   }
 </section>

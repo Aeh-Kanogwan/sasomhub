@@ -5,47 +5,59 @@
     var message = TempData["DisputeMessage"] as string;
 }
 
+@* ===== Page head ===== *@
 <section class="container page-head">
   <div class="breadcrumb">หน้าแรก / ข้อพิพาท / เปิดใหม่</div>
-  <h1>เปิดข้อพิพาท</h1>
+  <p class="eyebrow">◈ DISPUTES · FR-21</p>
+  <h1>เปิด<span class="gradient-text">ข้อพิพาท</span></h1>
+  <p class="muted stack-md" style="max-width:620px">บันทึกปัญหาที่เกิดกับธุรกรรม #@Model.TransactionId.ToString("N").Substring(0, 8).ToUpperInvariant() เพื่อให้ทีมงานช่วยไกล่เกลี่ย</p>
 </section>
 
-<!-- FR-21 / LEGAL #1: mediation only — the platform never pays or refunds. -->
+@* ===== FR-21 / LEGAL #1: mediation only ===== *@
 <section class="container" style="margin-bottom:var(--stack-md)">
-  <div class="alert alert-danger">
-    <strong>การไกล่เกลี่ยเท่านั้น</strong> — แพลตฟอร์มทำหน้าที่เป็นคนกลางบันทึกและตรวจสอบข้อพิพาท ไม่มีการจ่ายหรือคืนเงินผ่านระบบ
+  <div class="alert alert-warn">
+    <span>⚖️</span>
+    <div><strong>การไกล่เกลี่ยเท่านั้น</strong> — แพลตฟอร์มทำหน้าที่เป็นคนกลางบันทึกและตรวจสอบข้อพิพาท ไม่มีการจ่ายหรือคืนเงินผ่านระบบ</div>
   </div>
 </section>
 
 @if (!string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(message))
 {
-    <section class="container" style="margin-bottom:var(--stack-md)">
-      <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
-        <div>@message</div>
-      </div>
-    </section>
+  <section class="container" style="margin-bottom:var(--stack-md)">
+    <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
+      <span>@(result == "ok" ? "✅" : "⚠️")</span><div>@message</div>
+    </div>
+  </section>
 }
 
-<section class="container">
-  <form asp-action="Raise" method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="TransactionId" />
+@* ===== Form ===== *@
+<section class="container" style="margin-bottom:var(--stack-lg)">
+  <div class="glass" style="padding:24px; max-width:640px">
+    <form asp-action="Raise" method="post">
+      @Html.AntiForgeryToken()
+      <input type="hidden" asp-for="TransactionId" />
 
-    <div class="form-group">
-      <label asp-for="ReasonCodeId">เหตุผล (รหัสมาตรฐาน)</label>
-      <select asp-for="ReasonCodeId" class="form-control">
-        @foreach (var rc in Model.ReasonCodes)
-        {
+      <div style="margin-bottom:var(--stack-md)">
+        <label asp-for="ReasonCodeId" class="eyebrow">เหตุผล (รหัสมาตรฐาน)</label>
+        <select asp-for="ReasonCodeId" class="select">
+          @foreach (var rc in Model.ReasonCodes)
+          {
             <option value="@rc.ReasonCodeId">@rc.DisplayName</option>
-        }
-      </select>
-    </div>
+          }
+        </select>
+        <span asp-validation-for="ReasonCodeId" class="tiny" style="color:var(--error)"></span>
+      </div>
 
-    <div class="form-group">
-      <label asp-for="Description">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
-      <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-    </div>
+      <div style="margin-bottom:var(--stack-md)">
+        <label asp-for="Description" class="eyebrow">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
+        <textarea asp-for="Description" class="textarea" rows="5" placeholder="อธิบายสิ่งที่เกิดขึ้น เช่น สินค้าไม่ตรงปก จัดส่งไม่ครบ ฯลฯ"></textarea>
+        <span asp-validation-for="Description" class="tiny" style="color:var(--error)"></span>
+      </div>
 
-    <button type="submit" class="btn btn-primary">เปิดข้อพิพาท</button>
-  </form>
+      <div class="flex gap-sm wrap">
+        <button type="submit" class="btn btn-buy">เปิดข้อพิพาท</button>
+        <a asp-action="Index" class="btn btn-ghost">ยกเลิก</a>
+      </div>
+    </form>
+  </div>
 </section>
