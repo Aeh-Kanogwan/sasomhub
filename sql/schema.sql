@@ -929,21 +929,25 @@ GO
        (defence-in-depth at the permission layer; triggers still guard sysadmin/dbo access)
      - SQL Server 2022 ledger tables (CREATE TABLE ... WITH (LEDGER = ON)) or system-
        versioned temporal tables for cryptographically verifiable immutability.
+
+   IDEMPOTENT: CREATE OR ALTER so this section can be re-run safely. The same four
+   triggers are mirrored verbatim in sql/triggers.sql (single source for the Option A
+   deploy.ps1 re-apply step and the EF migration AddAppendOnlyTriggers) — keep in sync.
    ========================================================================== */
 GO
-CREATE TRIGGER TR_AuditLogs_NoModify ON dbo.AuditLogs
+CREATE OR ALTER TRIGGER dbo.TR_AuditLogs_NoModify ON dbo.AuditLogs
 INSTEAD OF UPDATE, DELETE AS
 BEGIN
     THROW 51001, 'AuditLogs is append-only (FR-24). UPDATE/DELETE is forbidden.', 1;
 END;
 GO
-CREATE TRIGGER TR_ConsentRecords_NoModify ON dbo.ConsentRecords
+CREATE OR ALTER TRIGGER dbo.TR_ConsentRecords_NoModify ON dbo.ConsentRecords
 INSTEAD OF UPDATE, DELETE AS
 BEGIN
     THROW 51002, 'ConsentRecords is append-only (PDPA). UPDATE/DELETE is forbidden; record a new consent event instead.', 1;
 END;
 GO
-CREATE TRIGGER TR_CreditTransactions_NoModify ON dbo.CreditTransactions
+CREATE OR ALTER TRIGGER dbo.TR_CreditTransactions_NoModify ON dbo.CreditTransactions
 INSTEAD OF UPDATE, DELETE AS
 BEGIN
     THROW 51003, 'CreditTransactions ledger is append-only (FR-29). UPDATE/DELETE is forbidden; post a correcting Adjustment/Revoke row instead.', 1;
@@ -952,7 +956,7 @@ GO
 -- M1: provider-send evidence is append-only (LEGAL #8). To record a status change, append a NEW row
 -- with the same CorrelationId — never UPDATE. NOTE: the PDPA retention-purge worker must run under a
 -- principal/role that bypasses this trigger (or temporarily DISABLE it) to physically delete expired rows.
-CREATE TRIGGER TR_NotifDelivery_NoModify ON dbo.NotificationDeliveryLog
+CREATE OR ALTER TRIGGER dbo.TR_NotifDelivery_NoModify ON dbo.NotificationDeliveryLog
 INSTEAD OF UPDATE, DELETE AS
 BEGIN
     THROW 51004, 'NotificationDeliveryLog is append-only (LEGAL #8). UPDATE/DELETE is forbidden; append a new attempt row instead.', 1;

@@ -1,11 +1,10 @@
--- seed_dev.sql — dev seed + EF migration stamp (Option A: schema.sql is source of truth)
+-- seed_dev.sql — DEV-ONLY seed data (Option A: schema.sql is source of truth)
+--
+-- NOTE: this file no longer stamps __EFMigrationsHistory. Migration stamping is owned by
+-- sql/deploy.ps1, which stamps EVERY migration found on disk (idempotent) so it never goes
+-- stale as new migrations are added. Run deploy.ps1 for the full one-command deploy; this
+-- file is kept for ad-hoc re-seeding of an already-deployed dev DB.
 SET NOCOUNT ON;
-
--- Stamp EF migration history so `dotnet ef` sees InitialCreate as applied
-IF OBJECT_ID('__EFMigrationsHistory') IS NULL
-  CREATE TABLE __EFMigrationsHistory (MigrationId nvarchar(150) NOT NULL PRIMARY KEY, ProductVersion nvarchar(32) NOT NULL);
-IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = N'20260618031905_InitialCreate')
-  INSERT INTO __EFMigrationsHistory VALUES (N'20260618031905_InitialCreate', N'8.0.8');
 
 -- (a) BlacklistReasonCode 7 = COMPLETED_DEAL (+5 trust reward on completed deal; FR-13..16 / TradeService)
 IF NOT EXISTS (SELECT 1 FROM dbo.BlacklistReasonCodes WHERE ReasonCodeId = 7)
@@ -34,4 +33,3 @@ IF NOT EXISTS (SELECT 1 FROM dbo.ConfigVersions WHERE ConfigKey = 'Company.BankN
 
 SELECT 'reasoncodes' = COUNT(*) FROM dbo.BlacklistReasonCodes;
 SELECT 'configversions' = COUNT(*) FROM dbo.ConfigVersions;
-SELECT 'migration_stamped' = COUNT(*) FROM __EFMigrationsHistory;

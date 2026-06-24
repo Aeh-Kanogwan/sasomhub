@@ -1,24 +1,40 @@
-# CI skeleton — build + test (DevSecOps)
-# STATUS: OPTIONAL / NOT YET RUN. ยังไม่เคยรันบน CI จริง (เครื่อง author ไม่มี SDK).
-# เปิดใช้เมื่อ push repo ขึ้น GitHub แล้ว ปรับ paths/branch ตามจริงได้
+# CI — build + unit tests + SQL Server integration tests (DevSecOps)
 #
-# หลักการ: build + test ทุก PR/บน main, ฝัง security scan (dependency) ตั้งแต่ pipeline
-# ไม่ใส่ secret ใด ๆ ใน workflow นี้ (test ใช้ EF Core InMemory จึงไม่ต้องมี DB/secret)
+# Principles:
+#   - Security is built into the pipeline, not bolted on: a dependency vulnerability
+#     scan runs on every build.
+#   - NO secrets are committed. The only secret here is the throwaway SA password for
+#     the ephemeral SQL Server service container, injected from the repo/Org secret
+#     MSSQL_SA_PASSWORD (NOT a production credential — this DB is created and destroyed
+#     within the job and never holds real data).
+#   - Two test layers:
+#       unit         -> EF Core InMemory, no DB, no secret. Fast gate on every PR.
+#       integration  -> real SQL Server 2022 service container. Verifies the things
+#                       InMemory cannot: append-only triggers (THROW 51001..51004),
+#                       filtered UNIQUE indexes, CHECK constraints — i.e. the exact
+#                       deploy path in sql/schema.sql + sql/triggers.sql.
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feature/**']
   pull_request:
     branches: [main]
 
 permissions:
   contents: read
 
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
 jobs:
-  build-test:
-    name: build + test (.NET 8)
+  # ---------------------------------------------------------------------------
+  # 1) Build + unit tests + dependency scan. No DB, no secret.
+  # ---------------------------------------------------------------------------
+  build-unit:
+    name: build + unit tests (.NET 8)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,22 +54,87 @@ jobs:
       - name: Build (no restore)
         run: dotnet build Marketplace.sln -c Release --no-restore
 
-      - name: Test (no build)
+      # Marketplace.sln contains ONLY the InMemory unit-test project
+      # (Marketplace.Infrastructure.Tests); the SQL integration project is intentionally
+      # NOT in the solution, so this run needs no database.
+      - name: Unit tests (InMemory, no DB)
         run: dotnet test Marketplace.sln -c Release --no-build --verbosity normal
 
-      # Security: ตรวจ NuGet dependency ที่มี known vulnerability — ไม่ fail build แต่ log ออกมา
-      # (ยกระดับเป็น fail ได้ภายหลังด้วยการ grep ผลลัพธ์)
+      # Security gate: fail the build if any NuGet dependency (incl. transitive) has a
+      # known vulnerability. Parses the machine-readable report.
       - name: Dependency vulnerability scan
-        run: dotnet list Marketplace.sln package --vulnerable --include-transitive || true
+        run: |
+          dotnet list Marketplace.sln package --vulnerable --include-transitive --format json > vuln.json || true
+          echo "----- vulnerable package report -----"
+          cat vuln.json
+          if grep -q '"severity"' vuln.json; then
+            echo "::error::Vulnerable NuGet dependencies detected (see report above)."
+            exit 1
+          fi
+          echo "No known-vulnerable dependencies."
 
-  # OPTIONAL: integration test กับ SQL Server จริง (trigger/filtered index/CHECK ที่ InMemory ครอบไม่ถึง)
-  # ยังไม่เปิด เพราะยังไม่มี integration test project ที่ตั้งค่าให้ใช้ MARKETPLACE_CONNECTION
-  # เปิดใช้เมื่อมี:
-  #   services:
-  #     mssql:
-  #       image: mcr.microsoft.com/mssql/server:2022-latest
-  #       env: { ACCEPT_EULA: 'Y', MSSQL_SA_PASSWORD: '<from-secrets>' }
-  #       ports: ['1433:1433']
-  #   env:
-  #     MARKETPLACE_CONNECTION: 'Server=localhost,1433;Database=MarketplaceDb;User Id=sa;Password=<from-secrets>;TrustServerCertificate=True'
-  #   steps: ... apply sql/schema.sql แล้วรัน integration tests ที่ verify trigger/index ของจริง
+  # ---------------------------------------------------------------------------
+  # 2) SQL Server integration tests. Spins an ephemeral SQL Server 2022, deploys
+  #    the real schema + append-only triggers, runs the integration project that
+  #    asserts trigger/index/CHECK behaviour against a live database.
+  # ---------------------------------------------------------------------------
+  integration:
+    name: SQL Server integration tests
+    runs-on: ubuntu-latest
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          # Throwaway, job-scoped credential. Provide via repo/Org secret MSSQL_SA_PASSWORD
+          # (must satisfy SQL Server complexity: >=8 chars, upper+lower+digit+symbol).
+          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+      # The integration fixture rewrites the catalog to MarketplaceDb_IT.
+      MARKETPLACE_CONNECTION: 'Server=localhost,1433;Database=MarketplaceDb_IT;User Id=sa;Password=${{ secrets.MSSQL_SA_PASSWORD }};TrustServerCertificate=True;MultipleActiveResultSets=true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install sqlcmd (mssql-tools18)
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc > /dev/null
+          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy schema + append-only triggers to MarketplaceDb_IT
+        run: |
+          # Option-A deploy path applied with SA auth (deploy.ps1 itself targets Windows/
+          # trusted-auth; in Linux CI we run the same .sql files directly).
+          # -I QUOTED_IDENTIFIER ON is REQUIRED or the filtered indexes fail.
+          SQLCMD="sqlcmd -S localhost,1433 -U sa -P $SA_PASSWORD -C -I -b"
+          $SQLCMD -Q "IF DB_ID('MarketplaceDb_IT') IS NULL CREATE DATABASE [MarketplaceDb_IT];"
+          $SQLCMD -d MarketplaceDb_IT -i sql/schema.sql
+          $SQLCMD -d MarketplaceDb_IT -i sql/triggers.sql
+          # Verify the four append-only triggers exist before testing.
+          $SQLCMD -d MarketplaceDb_IT -Q "DECLARE @t int=(SELECT COUNT(*) FROM sys.triggers WHERE name LIKE 'TR[_]%[_]NoModify'); IF @t<>4 THROW 60001,'expected 4 append-only triggers',1; PRINT CONCAT('append-only triggers = ',@t,'/4');"
+
+      - name: Restore + build integration test project
+        working-directory: src
+        run: |
+          dotnet restore ../tests/Marketplace.Integration.Tests/Marketplace.Integration.Tests.csproj
+          dotnet build  ../tests/Marketplace.Integration.Tests/Marketplace.Integration.Tests.csproj -c Release --no-restore
+
+      - name: Integration tests (real SQL Server)
+        working-directory: src
+        run: dotnet test ../tests/Marketplace.Integration.Tests/Marketplace.Integration.Tests.csproj -c Release --no-build --verbosity normal

@@ -79,6 +79,36 @@ dotnet user-secrets set "ConnectionStrings:MarketplaceDb" "Server=...;Database=M
 `Marketplace.Web` ใช้ cookie auth ไม่ต้องตั้ง signing key มี `UserSecretsId = marketplace-web-secrets`
 ไว้สำหรับ override connection string เฉพาะเครื่องเท่านั้น (optional)
 
+### 1.3 รายการ secret ที่ต้องตั้งใน prod (env var / key vault) — checklist
+
+ทุกตัวส่งผ่าน **env var** (mapping `:` → `__`) หรือ key vault — **ห้าม** ใส่ใน `appsettings.json` หรือ user-secrets บน prod
+ตอนนี้ใน repo `appsettings.json` มีแต่ค่า dev/placeholder/ว่าง (ตรวจแล้ว ไม่มี secret หลุด — ดู §1.4)
+
+| Secret (env var) | ใช้ที่ไหน | บังคับบน prod? | หมายเหตุ |
+|---|---|---|---|
+| `MARKETPLACE_CONNECTION` | Api/Web/Worker | **ใช่** | connection string จริง (precedence สูงสุด) |
+| `Jwt__SigningKey` | Api | **ใช่** | HS256 ≥32 ตัว, สุ่ม; Api fail-fast ถ้าหาย/placeholder/สั้น |
+| `Kyc__Mode` | Api/Worker | **ใช่** | ต้อง `Ndid` บน prod — `Mock` boot ไม่ได้ (LEGAL #2 hard-guard) |
+| `Kyc__NdidApiKey` | KYC transport | ใช่ (เมื่อ Ndid) | key ของ NDID gateway |
+| `Kyc__NdidRelyingPartyId` | KYC transport | ใช่ (เมื่อ Ndid) | RP id |
+| `Kyc__NdidBaseUrl` | KYC transport | ใช่ (เมื่อ Ndid) | endpoint NDID (sandbox/prod) — ยังเป็น TODO ต้องใส่ค่าจริง |
+| `Kyc__NationalIdHashPepper` | KYC | **ใช่** | pepper สำหรับ hash เลขบัตร (อย่าใช้ค่า dev) |
+| `Notifications__RecipientHashPepper` | Notification | **ใช่** | pepper HMAC ผู้รับ; dev default = `dev-only-...-change-me` ต้องเปลี่ยน |
+| `Notifications__Smtp__Username` / `__Password` | SMTP sender | ถ้าใช้ SMTP | บัญชี relay |
+| `Notifications__SendGrid__ApiKey` | SendGrid sender | ถ้าใช้ SendGrid | |
+| `Notifications__Sms__ApiKey` (+ `__Url`) | SMS gateway | ถ้าใช้ SMS | |
+
+> **prod guard (LEGAL #2):** `ModuleRegistration.AddM2Kyc` โยน exception ตอน startup ถ้า
+> `ASPNETCORE_ENVIRONMENT=Production` แต่ `Kyc:Mode != Ndid` → host บน prod **ห้าม** รันด้วย Mock provider
+> (กัน sandbox identity-proofing หลุดขึ้น prod) — ยืนยันด้วยการตั้ง `Kyc__Mode=Ndid` ก่อน deploy
+
+### 1.4 ยืนยันไม่มี secret หลุดใน repo
+
+`appsettings.json` ของ Api/Web/Worker เก็บเฉพาะ: connection string dev (LocalDB), issuer/audience,
+provider mode (`Log`/`Mock`), และ pepper **dev-only ที่มีคำว่า `change-me`** — ฟิลด์ secret จริง
+(`NdidApiKey`, `NationalIdHashPepper`, SMTP/SendGrid/SMS keys) เป็น **string ว่าง** พร้อม `_NOTE`
+สั่งให้ตั้งผ่าน secret store; `Jwt:SigningKey` **ไม่มี** ใน appsettings เลย (มาจาก user-secrets/env เท่านั้น)
+
 ---
 
 ## 2. Restore & Build (ทั้ง solution)
@@ -108,66 +138,42 @@ dotnet build Marketplace.sln -c Debug
 
 ## 3. Database & Migration
 
-มี **2 ทางเลือก** เลือกอย่างใดอย่างหนึ่ง — schema.sql คือ source of truth เสมอ
+> **สรุปสั้น:** มี **2 ทางเลือก** ที่ "convergent" — ทั้งคู่ติดตั้ง append-only triggers ครบ
+> เพราะ trigger ถูกบรรจุไว้ทั้งใน `sql/triggers.sql` (idempotent, `CREATE OR ALTER`) **และ**
+> ใน EF migration `20260624063844_AddAppendOnlyTriggers` (รัน raw SQL ผ่าน `migrationBuilder.Sql`)
+> schema.sql ยังเป็น source of truth ของ DDL เสมอ
+>
+> **ไฟล์ deploy ที่เกี่ยว:** `sql/schema.sql` (33 tables + index + CHECK + seed),
+> `sql/triggers.sql` (4 triggers, idempotent), `sql/seed_dev.sql` (dev seed), `sql/deploy.ps1` (orchestrator)
 
-### ทางเลือก A (แนะนำสำหรับ prod / parity สูงสุด): รัน `schema.sql` ตรง แล้ว stamp migration
+### ทางเลือก A (แนะนำสำหรับ prod / parity สูงสุด): **คำสั่งเดียว** `deploy.ps1`
 
-`schema.sql` มี features ที่ EF model อาจ generate ไม่ครบ/ไม่ตรง:
-filtered unique index (`WHERE IsDeleted = 0`, idempotency), `CHECK` constraints,
-`NEWSEQUENTIALID()` defaults, `ROWVERSION`, และ **append-only INSTEAD OF triggers**
-(`TR_AuditLogs_NoModify` / `TR_ConsentRecords_NoModify` / `TR_CreditTransactions_NoModify`)
+`deploy.ps1` ทำครบในคำสั่งเดียว แบบ idempotent + reproducible: create DB → run `schema.sql`
+→ run `triggers.sql` → run `seed_dev.sql` (ข้ามถ้า `-Prod`) → **stamp `__EFMigrationsHistory`
+ทุก migration ที่พบในโฟลเดอร์ Migrations อัตโนมัติ** (อ่านจากไฟล์จริง ไม่ hard-code จึงไม่ล้าสมัย)
+→ verify ว่ามี 4 triggers ครบ ไม่ต้องจำ tribal knowledge เรื่อง stamp/`sqlcmd -I` อีกต่อไป
 
-```bash
-# 1) สร้าง DB + schema จาก source of truth (ต้องมี sqlcmd หรือใช้ Azure Data Studio / SSMS)
-sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "IF DB_ID('MarketplaceDb') IS NULL CREATE DATABASE MarketplaceDb;"
-sqlcmd -S "(localdb)\MSSQLLocalDB" -d MarketplaceDb -i ..\sql\schema.sql
+```powershell
+# fresh dev DB (localhost, default instance) — คำสั่งเดียวจบ
+pwsh sql/deploy.ps1
+#   (Windows PowerShell 5.1: powershell.exe -NoProfile -ExecutionPolicy Bypass -File sql\deploy.ps1)
 
-# 2) สร้าง migration ไว้ในโค้ด (เพื่อให้ history/snapshot ตรงกับโมเดล) แต่ "อย่า" update DB
-dotnet ef migrations add InitialCreate \
-  --project Marketplace.Infrastructure \
-  --startup-project Marketplace.Api \
-  --output-dir Migrations
+# สร้าง DB ทดสอบใหม่จากศูนย์ (ไม่แตะ dev data)
+pwsh sql/deploy.ps1 -Database MarketplaceDb_Verify -DropFirst
 
-# 3) stamp ว่า migration นี้ apply แล้ว (เขียนแถวลง __EFMigrationsHistory โดยไม่รัน DDL)
-#    หมายเหตุ: dotnet-ef 8 ไม่มีคำสั่ง "stamp" ตรง ๆ — ใช้ SQL ใส่แถวเองตาม MigrationId ที่ได้จากข้อ 2
-#    (MigrationId = ชื่อโฟลเดอร์ใน Migrations/ เช่น 20260618xxxxxx_InitialCreate)
-sqlcmd -S "(localdb)\MSSQLLocalDB" -d MarketplaceDb -Q "IF OBJECT_ID('__EFMigrationsHistory') IS NULL CREATE TABLE __EFMigrationsHistory (MigrationId nvarchar(150) NOT NULL PRIMARY KEY, ProductVersion nvarchar(32) NOT NULL); INSERT INTO __EFMigrationsHistory VALUES (N'<MIGRATION_ID>', N'8.0.8');"
+# prod/staging (ข้าม dev seed; ตั้ง ConfigVersions/บัญชีบริษัทจริงเอง)
+pwsh sql/deploy.ps1 -Server prod-sql01 -Database MarketplaceDb -Prod
 ```
 
-### ทางเลือก B (สะดวกสำหรับ dev local): ให้ EF สร้าง DB จาก migration
+> `deploy.ps1` ใช้ `sqlcmd -E` (Trusted_Connection) + `-I -C -b`. ถ้า prod ต้องใช้ SQL auth
+> ให้รัน 3 ไฟล์ตรงด้วย `sqlcmd -U <user> -P <pwd> -C -I -b -d <db> -i sql\schema.sql` (แล้ว triggers/seed)
+> — CI (Linux + SA) ก็ทำแบบนี้ ดู `.github/workflows/ci.yml` job `integration`
+>
+> `sqlcmd -I` (QUOTED_IDENTIFIER ON) **บังคับ** ไม่งั้น filtered index ล้ม — deploy.ps1 ตั้งให้แล้ว
 
-```bash
-dotnet ef migrations add InitialCreate \
-  --project Marketplace.Infrastructure \
-  --startup-project Marketplace.Api \
-  --output-dir Migrations
-```
+### ทางเลือก B (dev local / forward migrate): `dotnet ef database update`
 
-**ก่อน `database update` ต้อง DIFF migration กับ `schema.sql`** — ตรวจว่า EF generate ครบ:
-
-```bash
-# ดู SQL ที่ migration จะรัน (ไม่แตะ DB) เพื่อเทียบกับ schema.sql
-dotnet ef migrations script \
-  --project Marketplace.Infrastructure \
-  --startup-project Marketplace.Api \
-  --output InitialCreate.sql
-```
-
-checklist diff (ถ้าขาด ให้เติมใน `IEntityTypeConfiguration` หรือใช้ทางเลือก A):
-
-- [ ] filtered unique index: `UX_Users_NormalizedEmail WHERE IsDeleted=0`,
-      `UX_Membership_LivePerUser WHERE Status IN ('Trial','Active')`,
-      `UX_CreditTx_Idempotency WHERE IdempotencyKey IS NOT NULL`,
-      `UX_CreditTx_TypeRef WHERE RefId IS NOT NULL`,
-      `UX_Notif_NoDup` — **สำคัญต่อ idempotency / no double-credit**
-- [ ] `CHECK` constraints ทั้งหมด (status enums, `BuyerId <> SellerId`, `Balance >= 0`, ฯลฯ)
-- [ ] `NEWSEQUENTIALID()` defaults บน Guid PK (ลด index fragmentation)
-- [ ] `ROWVERSION` (optimistic concurrency) บน Users/Memberships/Products/Auctions/Transactions/TrustScores/CreditAccounts
-- [ ] **append-only triggers** บน AuditLogs / ConsentRecords / CreditTransactions
-      (EF migration **ไม่ generate trigger ให้** — ต้องเพิ่ม raw SQL ใน migration ด้วย `migrationBuilder.Sql(...)`
-      หรือใช้ทางเลือก A)
-
-ถ้า diff ผ่านแล้วค่อย apply:
+ตอนนี้ EF chain ติดตั้ง trigger ครบแล้ว (ผ่าน migration `AddAppendOnlyTriggers`) — ไม่ต้องเติม manual
 
 ```bash
 dotnet ef database update \
@@ -175,8 +181,24 @@ dotnet ef database update \
   --startup-project Marketplace.Api
 ```
 
-> ⚠️ ถ้าใช้ทางเลือก B ต้องเติม trigger เองด้วย `migrationBuilder.Sql(...)` ไม่งั้น append-only
-> (FR-24/FR-29, AML/PDPA) จะไม่ถูก enforce ที่ระดับ DB — ถือเป็น regression ด้านกฎหมาย
+> ✅ ตรวจแล้ว (DevSecOps): `dotnet ef database update` บน DB ว่าง → ลง 6 migrations ครบรวม
+> `AddAppendOnlyTriggers` → DB มี 4 triggers (TR_AuditLogs/ConsentRecords/CreditTransactions/NotifDelivery_NoModify)
+> และ UPDATE/DELETE บนตาราง append-only โดน THROW 51001–51004
+
+**สำหรับ DB ที่ deploy ด้วยทางเลือก A มาก่อน (Option A → forward migrate):** ถ้า DB ถูกสร้างจาก
+`schema.sql` รุ่นเก่าแล้วค่อย `dotnet ef database update` อาจชน seed ที่ schema.sql ใส่ไว้แล้ว
+(เช่น `ConfigVersions` Id ซ้ำ) — ให้ apply schema effect ของ migration ที่ค้างด้วยมือแบบ idempotent
+(เช่น `ALTER TABLE ... ADD <col>` ถ้ายังไม่มี) แล้ว stamp migration นั้นใน `__EFMigrationsHistory`
+จากนั้น `database update` จะลงเฉพาะ `AddAppendOnlyTriggers` (CREATE OR ALTER ปลอดภัย)
+
+checklist diff (เผื่อเพิ่ม table/feature ใหม่ในอนาคต) — ของพวกนี้ EF generate ครบแล้ว ยกเว้น trigger:
+
+- [ ] filtered unique index: `UX_Users_NormalizedEmail`, `UX_Membership_LivePerUser`,
+      `UX_CreditTx_Idempotency`, `UX_CreditTx_TypeRef`, `UX_Notif_NoDup`
+- [ ] `CHECK` constraints, `NEWSEQUENTIALID()` defaults, `ROWVERSION`
+- [ ] **append-only triggers** — EF **ไม่ generate trigger ให้** ต้องเพิ่มผ่าน `migrationBuilder.Sql(...)`
+      โดยคัดลอกจาก `sql/triggers.sql` (ใช้ `CREATE OR ALTER` เพื่อให้ idempotent) — ดูตัวอย่างใน
+      migration `AddAppendOnlyTriggers` ที่มีอยู่แล้ว
 
 ---
 
@@ -274,8 +296,12 @@ triggers, ROWVERSION concurrency จึงต้อง verify ของจริ
 - **Secrets ใน prod**: `Jwt__SigningKey`, `MARKETPLACE_CONNECTION` ผ่าน env var/key vault — ไม่ใช่ user-secrets, ไม่ใช่ appsettings
 - **HTTPS/HSTS**: Web เปิด `UseHsts()` + `UseHttpsRedirection()` นอก Development แล้ว cookie `SecurePolicy=SameAsRequest`
   จะกลายเป็น Secure จริงเมื่ออยู่หลัง HTTPS — prod ต้อง terminate TLS และส่ง traffic เป็น https ถึง app (หรือตั้ง ForwardedHeaders)
-- **DB least-privilege** (defence-in-depth เสริม trigger): `DENY UPDATE, DELETE ON dbo.AuditLogs / dbo.ConsentRecords / dbo.CreditTransactions TO [app_role];`
-- **Backup/rollback**: backup DB ก่อนทุก migration; เก็บ `dotnet ef migrations script <from> <to>` ไว้เป็น forward + เตรียม `migrations script <to> <from>` เป็น rollback
+- **DB least-privilege** (defence-in-depth เสริม trigger): `DENY UPDATE, DELETE ON dbo.AuditLogs / dbo.ConsentRecords / dbo.CreditTransactions / dbo.NotificationDeliveryLog TO [app_role];`
+  (4 ตารางนี้มี append-only trigger THROW 51001–51004 อยู่แล้ว; DENY คือชั้นเสริมระดับ permission)
+- **Trigger deploy**: ทั้ง `deploy.ps1` และ `dotnet ef database update` ติดตั้ง trigger ครบ (CREATE OR ALTER, idempotent)
+  — หลัง deploy ทุกครั้งให้ verify `SELECT COUNT(*) FROM sys.triggers WHERE name LIKE 'TR\_%\_NoModify' ESCAPE '\'` ต้อง = 4
+- **Backup/rollback**: backup DB ก่อนทุก migration; forward = `dotnet ef database update`; rollback = `dotnet ef database update <PreviousMigrationId>`
+  (เช่น ย้อน trigger: `... update 20260624063001_AddFieldGapsM1M2M3` → migration `AddAppendOnlyTriggers.Down()` จะ DROP trigger ทั้ง 4); เก็บ `dotnet ef migrations script <from> <to>` เป็น artifact คู่กับ backup
 
 ---
 
@@ -286,6 +312,9 @@ triggers, ROWVERSION concurrency จึงต้อง verify ของจริ
 | `No connection string...` ตอน startup | ไม่มีทั้ง `MARKETPLACE_CONNECTION` และ `ConnectionStrings:MarketplaceDb` — ตั้งอย่างใดอย่างหนึ่ง |
 | Api throw `Jwt:SigningKey is missing...` | รันนอก Development โดยไม่มี key — `dotnet user-secrets set "Jwt:SigningKey" ...` หรือ env `Jwt__SigningKey` |
 | `dotnet ef` not found | `dotnet tool install --global dotnet-ef --version 8.*` แล้วเพิ่ม `~/.dotnet/tools` ใน PATH |
-| migration ไม่มี trigger/filtered index | EF ไม่ generate ให้ — ใช้ทางเลือก A (รัน schema.sql) หรือเติม `migrationBuilder.Sql(...)` |
+| migration ไม่มี trigger/filtered index | filtered index มาจาก EF แล้ว; trigger มาจาก migration `AddAppendOnlyTriggers` (หรือ `sql/triggers.sql` ในทางเลือก A) — verify ว่ามี 4 triggers หลัง deploy |
+| `database update` ล้ม `Violation of PRIMARY KEY ... ConfigVersions` | DB เดิมสร้างจาก schema.sql (ทางเลือก A) ที่ seed ไว้แล้ว ชนกับ `InsertData` ของ migration — apply schema effect (`ALTER TABLE ... ADD`) ของ migration ที่ค้างด้วยมือแบบ idempotent แล้ว stamp migration นั้น (ดู §3 ทางเลือก B) |
+| `sqlcmd` SSL cert error | เพิ่ม `-C` (trust server cert); และ `-I` เสมอ (QUOTED_IDENTIFIER ON) ไม่งั้น filtered index ล้ม |
+| Api/Worker boot ไม่ขึ้นบน prod (KYC) | `Kyc:Mode=Mock` ใน Production ถูก hard-guard ปฏิเสธ (LEGAL #2) — ตั้ง `Kyc__Mode=Ndid` + NDID secrets |
 | NU1605 package downgrade | align ทุก `Microsoft.EntityFrameworkCore.*` / `Microsoft.Extensions.*` เป็น 8.0.x |
 | LocalDB ต่อไม่ได้ | `sqllocaldb start MSSQLLocalDB` หรือชี้ `MARKETPLACE_CONNECTION` ไป SQL Server อื่น |
