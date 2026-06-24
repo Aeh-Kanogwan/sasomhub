@@ -27,15 +27,45 @@
       <div class="amount">@Model.PendingSlipCount</div>
       <p class="muted tiny">ค่าสมาชิกที่สมาชิกอัปสลิปมาแล้วรอยืนยัน</p>
     </a>
-    <div class="plan glass">
+    <a class="plan glass" asp-controller="AdminDisputes" asp-action="Index" style="text-decoration:none">
       <h3>ข้อพิพาทที่เปิดอยู่</h3>
       <div class="amount">@Model.OpenDisputeCount</div>
       <p class="muted tiny">Open / UnderReview</p>
-    </div>
-    <div class="plan glass">
-      <h3>รอพิจารณาแบน</h3>
+    </a>
+    <a class="plan glass" asp-controller="AdminBlacklist" asp-action="Index" asp-route-status="PendingReview" style="text-decoration:none">
+      <h3>รอพิจารณาระงับบัญชี</h3>
       <div class="amount">@Model.PendingBanReviewCount</div>
-      <p class="muted tiny">บัญชีที่ถูกตั้งสถานะ PendingBanReview</p>
-    </div>
+      <p class="muted tiny">รายการที่รอผู้ดูแลพิจารณา (PendingReview)</p>
+    </a>
+  </div>
+
+  <h2 class="stack-lg" style="margin-top:40px">เครื่องมือผู้ดูแล</h2>
+  <p class="muted tiny stack-sm">ทางลัดไปยังทุกส่วนของระบบผู้ดูแล</p>
+  <div class="plan-grid stack-md">
+    <a class="plan glass" asp-action="Payments" style="text-decoration:none">
+      <p class="eyebrow">◈ PAYMENTS</p>
+      <h3>ตรวจสอบสลิปค่าสมาชิก</h3>
+      <p class="muted tiny">ยืนยัน/ปฏิเสธสลิปการโอนค่าสมาชิกและการต่ออายุ</p>
+    </a>
+    <a class="plan glass" asp-controller="AdminDisputes" asp-action="Index" style="text-decoration:none">
+      <p class="eyebrow">◈ DISPUTES</p>
+      <h3>จัดการข้อพิพาท</h3>
+      <p class="muted tiny">ตรวจสอบและตัดสินข้อพิพาทระหว่างผู้ซื้อ-ผู้ขาย</p>
+    </a>
+    <a class="plan glass" asp-controller="AdminPrivacy" asp-action="Index" style="text-decoration:none">
+      <p class="eyebrow">◈ PDPA / DSAR</p>
+      <h3>คำขอใช้สิทธิข้อมูลส่วนบุคคล</h3>
+      <p class="muted tiny">รับเรื่อง สร้างไฟล์ข้อมูล ลบ/ปกปิด หรือปฏิเสธคำขอ</p>
+    </a>
+    <a class="plan glass" asp-controller="AdminBlacklist" asp-action="Index" style="text-decoration:none">
+      <p class="eyebrow">◈ REVIEW</p>
+      <h3>พิจารณาเตือน / ระงับบัญชี</h3>
+      <p class="muted tiny">พิจารณาโดยผู้ดูแล มีกระบวนการที่เป็นธรรม ไม่ระงับอัตโนมัติ</p>
+    </a>
+    <a class="plan glass" asp-controller="AdminConfig" asp-action="Index" style="text-decoration:none">
+      <p class="eyebrow">◈ CONFIG</p>
+      <h3>ตั้งค่าระบบและราคา</h3>
+      <p class="muted tiny">จัดการเวอร์ชันราคา/เครดิต/บัญชีรับโอน (บันทึกประวัติ)</p>
+    </a>
   </div>
 </section>

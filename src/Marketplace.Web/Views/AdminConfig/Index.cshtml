@@ -1,47 +1,60 @@
 @model Marketplace.Web.Models.AdminConfig.AdminConfigIndexViewModel
 @{
-    ViewData["Title"] = "ตั้งค่าระบบ / ราคา (Admin)";
-    var ok = TempData["AdminOk"] as string;
-    var err = TempData["AdminError"] as string;
+    ViewData["Title"] = "ตั้งค่าระบบ / ราคา";
 }
 
-<section class="container page-head">
-  <div class="breadcrumb">Admin / ตั้งค่าระบบ</div>
-  <h1>ตั้งค่าระบบและราคา</h1>
-</section>
-
-@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
-@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
-
-<section class="container" style="margin-bottom:var(--stack-md)">
-  <div class="alert alert-info">
-    การแก้ไขเป็นแบบบันทึกประวัติ (append-only): ทุกการเปลี่ยนแปลงจะเพิ่มเวอร์ชันใหม่ที่มีผล
-    ตั้งแต่เวลาที่กำหนด ไม่กระทบราคาที่เก็บไว้กับรอบสมาชิกที่ชำระไปแล้ว
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb"><a asp-controller="Admin" asp-action="Index">ผู้ดูแล</a> / ตั้งค่าระบบ</div>
+    <p class="eyebrow">◈ ADMIN · CONFIG</p>
+    <h1>ตั้งค่าระบบและราคา</h1>
+    <p class="muted stack-md">
+      การแก้ไขเป็นแบบบันทึกประวัติ (append-only): ทุกการเปลี่ยนแปลงจะเพิ่มเวอร์ชันใหม่ที่มีผล
+      ตั้งแต่เวลาที่กำหนด ไม่กระทบราคาที่เก็บไว้กับรอบสมาชิกที่ชำระไปแล้ว
+    </p>
   </div>
-</section>
+</div>
 
-<section class="container">
+<section class="section container">
+  @if (TempData["AdminOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["AdminError"] is string errMsg)
+  {
+    <div class="alert alert-warn stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
   @if (Model.Current.Count == 0)
   {
-      <p>ยังไม่มีค่าคอนฟิกในระบบ</p>
+    <div class="glass stack-md" style="padding:24px"><p class="muted">ยังไม่มีค่าคอนฟิกในระบบ</p></div>
   }
   else
   {
-      <table class="table">
+    <div class="glass" style="padding:8px 0; overflow-x:auto">
+      <table style="width:100%; border-collapse:collapse">
         <thead>
-          <tr><th>คีย์ (ConfigKey)</th><th>ค่าปัจจุบัน</th><th>มีผลตั้งแต่ (UTC)</th><th></th></tr>
+          <tr class="muted tiny" style="text-align:left">
+            <th style="padding:10px 16px">คีย์ (ConfigKey)</th>
+            <th style="padding:10px 16px">ค่าปัจจุบัน</th>
+            <th style="padding:10px 16px">มีผลตั้งแต่ (UTC)</th>
+            <th style="padding:10px 16px"></th>
+          </tr>
         </thead>
         <tbody>
           @foreach (var c in Model.Current)
           {
-              <tr>
-                <td><code>@c.ConfigKey</code></td>
-                <td>@c.Value</td>
-                <td>@c.EffectiveFromUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                <td><a asp-action="History" asp-route-key="@c.ConfigKey">ประวัติ / แก้ไข</a></td>
-              </tr>
+            <tr style="border-top:1px solid rgba(255,255,255,.06)">
+              <td style="padding:10px 16px"><code>@c.ConfigKey</code></td>
+              <td style="padding:10px 16px"><strong>@c.Value</strong></td>
+              <td style="padding:10px 16px" class="muted tiny">@c.EffectiveFromUtc.ToString("yyyy-MM-dd HH:mm") <span class="badge badge-verified">UTC</span></td>
+              <td style="padding:10px 16px">
+                <a asp-action="History" asp-route-key="@c.ConfigKey" class="btn btn-ghost btn-sm">ประวัติ / แก้ไข</a>
+              </td>
+            </tr>
           }
         </tbody>
       </table>
+    </div>
   }
 </section>

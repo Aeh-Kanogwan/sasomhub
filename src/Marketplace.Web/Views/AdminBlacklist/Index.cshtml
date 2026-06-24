@@ -1,0 +1,121 @@
+@model Marketplace.Web.Models.Admin.AdminBlacklistViewModel
+@{
+    ViewData["Title"] = "คิวพิจารณาเตือน / ระงับบัญชี";
+    var statusFilter = Model.StatusFilter;
+
+    // Neutral, non-stigmatising status labels (Legal #3: this is an internal warn/review surface,
+    // not a public shaming list). Wording stays factual.
+    (string cls, string label) StatusBadge(string s) => s switch
+    {
+        "PendingReview" => ("badge-trial", "รอผู้ดูแลพิจารณา"),
+        "Confirmed" => ("badge-expired", "ยืนยันระงับแล้ว"),
+        "Rejected" => ("badge-active", "ปฏิเสธข้อเสนอ"),
+        "Appealed" => ("badge-trial", "อยู่ระหว่างอุทธรณ์"),
+        "Overturned" => ("badge-active", "กลับคำสั่ง"),
+        _ => ("badge-active", s)
+    };
+
+    bool IsFilter(string? s) => string.Equals(statusFilter, s, StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb"><a asp-controller="Admin" asp-action="Index">ผู้ดูแล</a> / พิจารณาเตือน-ระงับบัญชี</div>
+    <p class="eyebrow">◈ ADMIN · REVIEW</p>
+    <h1>คิวพิจารณาเตือนและระงับบัญชี</h1>
+    <p class="muted stack-md">
+      ระบบนี้เป็นเครื่องมือเตือนภายในและพิจารณาโดยผู้ดูแล (มีกระบวนการที่เป็นธรรม) —
+      ไม่มีการระงับถาวรโดยอัตโนมัติ ทุกการตัดสินมาจากผู้ดูแลที่เป็นมนุษย์ และใช้รหัสเหตุผลมาตรฐานเท่านั้น
+    </p>
+  </div>
+</div>
+
+<section class="section container">
+  @if (TempData["AdminOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["AdminError"] is string errMsg)
+  {
+    <div class="alert alert-warn stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  <div class="stack-md" style="display:flex; gap:8px; flex-wrap:wrap">
+    <a asp-action="Index" asp-route-status="PendingReview" class="btn btn-ghost btn-sm @(IsFilter("PendingReview") ? "active" : "")">รอพิจารณา</a>
+    <a asp-action="Index" asp-route-status="Confirmed" class="btn btn-ghost btn-sm @(IsFilter("Confirmed") ? "active" : "")">ยืนยันระงับแล้ว</a>
+    <a asp-action="Index" asp-route-status="Rejected" class="btn btn-ghost btn-sm @(IsFilter("Rejected") ? "active" : "")">ปฏิเสธ</a>
+    <a asp-action="Index" asp-route-status="Appealed" class="btn btn-ghost btn-sm @(IsFilter("Appealed") ? "active" : "")">อุทธรณ์</a>
+    <a asp-action="Index" asp-route-status="" class="btn btn-ghost btn-sm @(string.IsNullOrEmpty(statusFilter) ? "active" : "")">ทั้งหมด</a>
+  </div>
+
+  <div class="glass" style="padding:8px 0; overflow-x:auto; margin-top:16px">
+    <table style="width:100%; border-collapse:collapse">
+      <thead>
+        <tr class="muted tiny" style="text-align:left">
+          <th style="padding:10px 16px">บัญชีที่เกี่ยวข้อง</th>
+          <th style="padding:10px 16px">รหัสเหตุผล</th>
+          <th style="padding:10px 16px">สถานะพิจารณา</th>
+          <th style="padding:10px 16px">อุทธรณ์</th>
+          <th style="padding:10px 16px">มีผลตั้งแต่</th>
+          <th style="padding:10px 16px">สิ้นสุด</th>
+          <th style="padding:10px 16px">การดำเนินการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (Model.Entries.Count == 0)
+        {
+          <tr><td colspan="7" style="padding:16px" class="muted">ไม่มีรายการในสถานะนี้</td></tr>
+        }
+        @foreach (var e in Model.Entries)
+        {
+          var badge = StatusBadge(e.ReviewStatus);
+          <tr style="border-top:1px solid rgba(255,255,255,.06)">
+            <td style="padding:10px 16px"><code>@e.UserId.ToString("N").Substring(0, 8)</code></td>
+            <td style="padding:10px 16px"><span class="badge badge-verified">CODE #@e.ReasonCodeId</span></td>
+            <td style="padding:10px 16px"><span class="badge @badge.cls">@badge.label</span></td>
+            <td style="padding:10px 16px" class="muted tiny">@(e.AppealStatus == "None" ? "—" : e.AppealStatus)</td>
+            <td style="padding:10px 16px" class="muted tiny">@e.EffectiveAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+            <td style="padding:10px 16px" class="muted tiny">@(e.ExpiresAtUtc?.ToLocalTime().ToString("dd/MM/yyyy") ?? "ไม่กำหนด")</td>
+            <td style="padding:10px 16px">
+              @if (e.ReviewStatus == "PendingReview")
+              {
+                <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center">
+                  <form asp-action="Confirm" method="post" style="display:flex; gap:4px; align-items:center">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@e.BlacklistEntryId" />
+                    <input type="text" name="note" class="input" placeholder="บันทึกเหตุผลการยืนยัน" style="width:160px" />
+                    <button type="submit" class="btn btn-primary btn-sm">ยืนยันระงับ</button>
+                  </form>
+                  <form asp-action="Reject" method="post" style="display:flex; gap:4px; align-items:center">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@e.BlacklistEntryId" />
+                    <input type="text" name="note" class="input" placeholder="บันทึกเหตุผลที่ปฏิเสธ" style="width:160px" />
+                    <button type="submit" class="btn btn-ghost btn-sm">ปฏิเสธ</button>
+                  </form>
+                </div>
+              }
+              else if (e.ReviewStatus == "Confirmed" && e.IsActive)
+              {
+                <form asp-action="Unban" method="post" style="display:flex; gap:4px; align-items:center">
+                  @Html.AntiForgeryToken()
+                  <input type="hidden" name="id" value="@e.BlacklistEntryId" />
+                  <input type="text" name="note" class="input" placeholder="บันทึกเหตุผลการปลด" style="width:160px" />
+                  <button type="submit" class="btn btn-ghost btn-sm">ปลดการระงับ</button>
+                </form>
+              }
+              else
+              {
+                <span class="muted tiny">ดำเนินการแล้ว</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="muted tiny stack-md">
+    หมายเหตุ: รหัสเหตุผล (CODE) เป็นรหัสมาตรฐานภายในตามนโยบาย ไม่มีการบันทึกข้อความเชิงตีตราต่อบุคคล
+    บันทึกของผู้ดูแลที่กรอกในแต่ละการดำเนินการจะถูกเก็บไว้ในระบบตรวจสอบ (audit)
+  </p>
+</section>

@@ -1,69 +1,86 @@
 @model Marketplace.Web.Models.AdminConfig.AdminConfigHistoryViewModel
 @{
-    ViewData["Title"] = "ประวัติคอนฟิก (Admin)";
-    var ok = TempData["AdminOk"] as string;
-    var err = TempData["AdminError"] as string;
+    ViewData["Title"] = "ประวัติคอนฟิก";
 }
 
-<section class="container page-head">
-  <div class="breadcrumb">Admin / ตั้งค่าระบบ / ประวัติ</div>
-  <h1>ประวัติเวอร์ชัน: <code>@Model.ConfigKey</code></h1>
-</section>
-
-@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
-@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
-
-<section class="container" style="margin-bottom:var(--stack-md)">
-  <h2>เพิ่มเวอร์ชันใหม่</h2>
-  <div class="alert alert-info">
-    การบันทึกจะเพิ่มเวอร์ชันใหม่ (ไม่แก้ของเดิม) และมีผลตั้งแต่เวลาที่กำหนดเป็นต้นไป
-    ห้ามตั้งเวลาที่มีผลซ้ำกับเวอร์ชันที่มีอยู่แล้ว
+<div class="container">
+  <div class="page-head">
+    <div class="breadcrumb"><a asp-controller="Admin" asp-action="Index">ผู้ดูแล</a> / <a asp-action="Index">ตั้งค่าระบบ</a> / ประวัติ</div>
+    <p class="eyebrow">◈ ADMIN · CONFIG HISTORY</p>
+    <h1>ประวัติเวอร์ชัน: <code>@Model.ConfigKey</code></h1>
   </div>
-  <form asp-action="Append" method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="key" value="@Model.ConfigKey" />
-    <div class="form-group">
-      <label for="value">ค่าใหม่</label>
-      <input id="value" name="value" class="form-control" value="@Model.NewValue" required />
-    </div>
-    <div class="form-group">
-      <label for="effectiveFromUtc">มีผลตั้งแต่ (UTC)</label>
-      <input id="effectiveFromUtc" name="effectiveFromUtc" type="datetime-local" class="form-control"
-             value="@Model.NewEffectiveFromUtc.ToString("yyyy-MM-ddTHH:mm")" required />
-    </div>
-    <div class="form-group">
-      <label for="note">หมายเหตุ</label>
-      <input id="note" name="note" class="form-control" value="@Model.Note" />
-    </div>
-    <button type="submit" class="btn btn-primary">บันทึกเวอร์ชันใหม่</button>
-  </form>
-</section>
+</div>
 
-<section class="container">
-  <h2>ประวัติทั้งหมด (ใหม่สุดก่อน)</h2>
+<section class="section container">
+  @if (TempData["AdminOk"] is string okMsg)
+  {
+    <div class="alert alert-info stack-md"><span>✅</span><span>@okMsg</span></div>
+  }
+  @if (TempData["AdminError"] is string errMsg)
+  {
+    <div class="alert alert-warn stack-md"><span>⚠️</span><span>@errMsg</span></div>
+  }
+
+  <div class="glass stack-md" style="padding:24px">
+    <h4 style="margin-top:0">เพิ่มเวอร์ชันใหม่</h4>
+    <div class="alert alert-info stack-sm">
+      <span>ℹ️</span>
+      <span>การบันทึกจะเพิ่มเวอร์ชันใหม่ (ไม่แก้ของเดิม) และมีผลตั้งแต่เวลาที่กำหนดเป็นต้นไป
+      ห้ามตั้งเวลาที่มีผลซ้ำกับเวอร์ชันที่มีอยู่แล้ว เวลาที่กรอกถือเป็นเวลา UTC</span>
+    </div>
+    <form asp-action="Append" method="post">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="key" value="@Model.ConfigKey" />
+      <div class="stack-md">
+        <label class="muted tiny" for="value">ค่าใหม่</label>
+        <input id="value" name="value" class="input" value="@Model.NewValue" required />
+      </div>
+      <div class="stack-md">
+        <label class="muted tiny" for="effectiveFromUtc">มีผลตั้งแต่ (UTC)</label>
+        <input id="effectiveFromUtc" name="effectiveFromUtc" type="datetime-local" class="input"
+               value="@Model.NewEffectiveFromUtc.ToString("yyyy-MM-ddTHH:mm")" required />
+      </div>
+      <div class="stack-md">
+        <label class="muted tiny" for="note">หมายเหตุ</label>
+        <input id="note" name="note" class="input" value="@Model.Note" placeholder="เช่น ปรับราคาตามมติบอร์ด" />
+      </div>
+      <button type="submit" class="btn btn-primary stack-md">บันทึกเวอร์ชันใหม่</button>
+    </form>
+  </div>
+
+  <h4 class="stack-md">ประวัติทั้งหมด (ใหม่สุดก่อน)</h4>
   @if (Model.History.Count == 0)
   {
-      <p>ยังไม่มีเวอร์ชันสำหรับคีย์นี้</p>
+    <div class="glass stack-md" style="padding:24px"><p class="muted">ยังไม่มีเวอร์ชันสำหรับคีย์นี้</p></div>
   }
   else
   {
-      <table class="table">
+    <div class="glass stack-md" style="padding:8px 0; overflow-x:auto">
+      <table style="width:100%; border-collapse:collapse">
         <thead>
-          <tr><th>ค่า</th><th>มีผลตั้งแต่ (UTC)</th><th>โดย</th><th>หมายเหตุ</th><th>บันทึกเมื่อ (UTC)</th></tr>
+          <tr class="muted tiny" style="text-align:left">
+            <th style="padding:10px 16px">ค่า</th>
+            <th style="padding:10px 16px">มีผลตั้งแต่ (UTC)</th>
+            <th style="padding:10px 16px">โดย</th>
+            <th style="padding:10px 16px">หมายเหตุ</th>
+            <th style="padding:10px 16px">บันทึกเมื่อ (UTC)</th>
+          </tr>
         </thead>
         <tbody>
           @foreach (var v in Model.History)
           {
-              <tr>
-                <td>@v.Value</td>
-                <td>@v.EffectiveFromUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                <td>@(v.CreatedByUserId?.ToString("N").Substring(0, 8) ?? "system/seed")</td>
-                <td>@(string.IsNullOrEmpty(v.Note) ? "—" : v.Note)</td>
-                <td>@v.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-              </tr>
+            <tr style="border-top:1px solid rgba(255,255,255,.06)">
+              <td style="padding:10px 16px"><strong>@v.Value</strong></td>
+              <td style="padding:10px 16px" class="muted tiny">@v.EffectiveFromUtc.ToString("yyyy-MM-dd HH:mm")</td>
+              <td style="padding:10px 16px" class="muted tiny"><code>@(v.CreatedByUserId?.ToString("N").Substring(0, 8) ?? "system/seed")</code></td>
+              <td style="padding:10px 16px" class="muted tiny">@(string.IsNullOrEmpty(v.Note) ? "—" : v.Note)</td>
+              <td style="padding:10px 16px" class="muted tiny">@v.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
           }
         </tbody>
       </table>
+    </div>
   }
-  <a asp-action="Index">กลับไปหน้าตั้งค่า</a>
+
+  <a asp-action="Index" class="btn btn-ghost stack-md">กลับไปหน้าตั้งค่า</a>
 </section>
