@@ -792,13 +792,80 @@ GO
 CREATE INDEX IX_ConfigVer_Key_Effective ON dbo.ConfigVersions (ConfigKey, EffectiveFromUtc DESC);
 GO
 
+/* ============================ 21. NOTIFICATION DELIVERY LOG (M1) ==========
+   APPEND-ONLY evidence of every real outbound Email/SMS send attempt through a concrete
+   provider. LEGAL #8 / FR-27 / FR-32: prove a notice was handed to a provider, to whom,
+   when, and with what outcome — independent of the lifecycle dbo.Notifications row.
+   PDPA: RecipientMasked stores a masked address only (never raw email/phone); the row is
+   purged after RetentionExpiresAtUtc by a retention worker.
+   ========================================================================== */
+CREATE TABLE dbo.NotificationDeliveryLog (
+    NotificationDeliveryLogId BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    NotificationId      UNIQUEIDENTIFIER NULL,
+    UserId              UNIQUEIDENTIFIER NULL,
+    Provider            VARCHAR(40)   NOT NULL,   -- 'SendGrid','SES','TwilioSms','SmtpDev','SmsMock'
+    ProviderMessageId   VARCHAR(200)  NULL,
+    Channel             VARCHAR(20)   NOT NULL,
+    RecipientMasked     VARCHAR(120)  NOT NULL,   -- masked; never raw PII
+    TemplateKey         VARCHAR(80)   NOT NULL,
+    TemplateVersion     VARCHAR(20)   NOT NULL,
+    Status              VARCHAR(20)   NOT NULL CONSTRAINT DF_NotifDelivery_Status DEFAULT ('Queued'),
+    ErrorDetail         NVARCHAR(1000) NULL,
+    AttemptCount        INT           NOT NULL CONSTRAINT DF_NotifDelivery_Attempt DEFAULT (0),
+    PayloadSnapshotJson NVARCHAR(MAX) NULL,       -- rendered template vars; no secrets / no raw PII
+    CorrelationId       UNIQUEIDENTIFIER NULL,
+    SentAtUtc           DATETIME2(3)  NULL,
+    CreatedAtUtc        DATETIME2(3)  NOT NULL CONSTRAINT DF_NotifDelivery_Created DEFAULT (SYSUTCDATETIME()),
+    RetentionExpiresAtUtc DATETIME2(3) NOT NULL,
+    CONSTRAINT FK_NotifDelivery_Notification FOREIGN KEY (NotificationId) REFERENCES dbo.Notifications (NotificationId),
+    CONSTRAINT FK_NotifDelivery_User FOREIGN KEY (UserId) REFERENCES dbo.Users (UserId),
+    CONSTRAINT CK_NotifDelivery_Channel CHECK (Channel IN ('Email','Sms')),
+    CONSTRAINT CK_NotifDelivery_Status CHECK (Status IN ('Queued','Sent','Failed','Retrying'))
+);
+GO
+CREATE INDEX IX_NotifDelivery_User ON dbo.NotificationDeliveryLog (UserId, CreatedAtUtc);
+CREATE INDEX IX_NotifDelivery_Correlation ON dbo.NotificationDeliveryLog (CorrelationId) WHERE CorrelationId IS NOT NULL;
+CREATE INDEX IX_NotifDelivery_Retention ON dbo.NotificationDeliveryLog (RetentionExpiresAtUtc);
+GO
+
+/* ============================ 22. PDPA DSAR (M3) ==========================
+   Data-subject access/erasure requests (FR-01/04). Tracks Export/Erasure/Access/Rectify/
+   WithdrawConsent with a statutory DueByUtc SLA. Stores only the export artifact PATH (never
+   the data inline); erasure reuses the soft-delete/anonymize on dbo.Users. Status transitions
+   are mirrored to dbo.AuditLogs by the app layer.
+   ========================================================================== */
+CREATE TABLE dbo.DataSubjectRequests (
+    DataSubjectRequestId UNIQUEIDENTIFIER NOT NULL
+                    CONSTRAINT DF_Dsar_Id DEFAULT (NEWSEQUENTIALID()) PRIMARY KEY,
+    RequestType         VARCHAR(20)   NOT NULL,
+    Status              VARCHAR(20)   NOT NULL CONSTRAINT DF_Dsar_Status DEFAULT ('Pending'),
+    RequestedByUserId   UNIQUEIDENTIFIER NOT NULL,
+    VerifiedAtUtc       DATETIME2(3)  NULL,
+    HandledByUserId     UNIQUEIDENTIFIER NULL,
+    ResultArtifactPath  NVARCHAR(400) NULL,
+    DueByUtc            DATETIME2(3)  NOT NULL,
+    Note                NVARCHAR(2000) NULL,
+    CreatedAtUtc        DATETIME2(3)  NOT NULL CONSTRAINT DF_Dsar_Created DEFAULT (SYSUTCDATETIME()),
+    CompletedAtUtc      DATETIME2(3)  NULL,
+    CONSTRAINT FK_Dsar_Requester FOREIGN KEY (RequestedByUserId) REFERENCES dbo.Users (UserId),
+    CONSTRAINT FK_Dsar_HandledBy FOREIGN KEY (HandledByUserId) REFERENCES dbo.Users (UserId),
+    CONSTRAINT CK_Dsar_Type CHECK (RequestType IN ('Export','Erasure','Access','Rectify','WithdrawConsent')),
+    CONSTRAINT CK_Dsar_Status CHECK (Status IN ('Pending','InProgress','Completed','Rejected'))
+);
+GO
+CREATE INDEX IX_Dsar_Requester ON dbo.DataSubjectRequests (RequestedByUserId, CreatedAtUtc);
+CREATE INDEX IX_Dsar_Status_Due ON dbo.DataSubjectRequests (Status, DueByUtc);
+GO
+
 /* ============================ 14. SEED LOOKUP DATA ======================== */
 INSERT INTO dbo.KycStatuses (KycStatusId, Code, DisplayName) VALUES
     (0,'NONE',     N'Not verified'),
     (1,'PENDING',  N'Pending review'),
     (2,'VERIFIED', N'Verified'),
     (3,'REJECTED', N'Rejected'),
-    (4,'EXPIRED',  N'Expired');
+    (4,'EXPIRED',  N'Expired'),
+    -- M2 (NDID e-KYC): provider redirect started, awaiting async callback/IAL result.
+    (5,'INITIATED',N'Initiated (awaiting provider)');
 GO
 
 -- Annual membership tiers: Normal=1000, Verified=1500, Premium=2000 (THB/year).
@@ -874,6 +941,15 @@ CREATE TRIGGER TR_CreditTransactions_NoModify ON dbo.CreditTransactions
 INSTEAD OF UPDATE, DELETE AS
 BEGIN
     THROW 51003, 'CreditTransactions ledger is append-only (FR-29). UPDATE/DELETE is forbidden; post a correcting Adjustment/Revoke row instead.', 1;
+END;
+GO
+-- M1: provider-send evidence is append-only (LEGAL #8). To record a status change, append a NEW row
+-- with the same CorrelationId — never UPDATE. NOTE: the PDPA retention-purge worker must run under a
+-- principal/role that bypasses this trigger (or temporarily DISABLE it) to physically delete expired rows.
+CREATE TRIGGER TR_NotifDelivery_NoModify ON dbo.NotificationDeliveryLog
+INSTEAD OF UPDATE, DELETE AS
+BEGIN
+    THROW 51004, 'NotificationDeliveryLog is append-only (LEGAL #8). UPDATE/DELETE is forbidden; append a new attempt row instead.', 1;
 END;
 GO
 

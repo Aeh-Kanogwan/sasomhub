@@ -61,6 +61,8 @@ public class MarketplaceDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Notification> Notifications => Set<Notification>();          // B-01/G-1
     public DbSet<ConfigVersion> ConfigVersions => Set<ConfigVersion>();       // B-04/G-4
+    public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs => Set<NotificationDeliveryLog>(); // M1
+    public DbSet<DataSubjectRequest> DataSubjectRequests => Set<DataSubjectRequest>();                // M3
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

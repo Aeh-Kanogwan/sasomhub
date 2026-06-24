@@ -83,3 +83,30 @@ public enum NotificationChannel { Email, InApp, Sms }
 
 /// <summary>Notification delivery status. CHECK CK_Notif_Status.</summary>
 public enum NotificationStatus { Pending, Sent, Failed, Skipped }
+
+// ============================ PHASE A : MODULE FOUNDATIONS ================
+// Added in Phase A so M1..M7 backend-devs implement against fixed string values.
+// All map to VARCHAR via HasConversion<string>(); keep names == DB string values.
+
+/// <summary>
+/// M1: per-attempt delivery outcome for a real Email/SMS send (dbo.NotificationDeliveryLog).
+/// Distinct from <see cref="NotificationStatus"/> (the lifecycle-notice row) — this is the
+/// provider-level evidence of one physical send attempt (LEGAL #8 consumer-protection proof).
+/// CHECK CK_NotifDelivery_Status.
+/// </summary>
+public enum DeliveryStatus { Queued, Sent, Failed, Retrying }
+
+/// <summary>M1: outbound message channel for a real provider send. CHECK CK_NotifDelivery_Channel.</summary>
+public enum DeliveryChannel { Email, Sms }
+
+/// <summary>
+/// M3 (PDPA DSAR): kind of data-subject request (dbo.DataSubjectRequests).
+/// CHECK CK_Dsar_Type.
+/// </summary>
+public enum DataSubjectRequestType { Export, Erasure, Access, Rectify, WithdrawConsent }
+
+/// <summary>
+/// M3 (PDPA DSAR): request lifecycle. Append-friendly — transitions are recorded in AuditLogs.
+/// CHECK CK_Dsar_Status.
+/// </summary>
+public enum DataSubjectRequestStatus { Pending, InProgress, Completed, Rejected }

@@ -18,7 +18,9 @@ internal static class SeedData
             new KycStatus { KycStatusId = 1, Code = "PENDING",  DisplayName = "Pending review" },
             new KycStatus { KycStatusId = 2, Code = "VERIFIED", DisplayName = "Verified" },
             new KycStatus { KycStatusId = 3, Code = "REJECTED", DisplayName = "Rejected" },
-            new KycStatus { KycStatusId = 4, Code = "EXPIRED",  DisplayName = "Expired" });
+            new KycStatus { KycStatusId = 4, Code = "EXPIRED",  DisplayName = "Expired" },
+            // M2 (NDID e-KYC): provider redirect started, awaiting async callback/IAL result.
+            new KycStatus { KycStatusId = 5, Code = "INITIATED", DisplayName = "Initiated (awaiting provider)" });
 
         // Membership tiers — annual price Normal=1000 / Verified=1500 / Premium=2000 (FR-27).
         modelBuilder.Entity<MembershipTier>().HasData(

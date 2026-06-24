@@ -107,6 +107,76 @@ public class AppraisalOpinionConfiguration : IEntityTypeConfiguration<AppraisalO
     }
 }
 
+public class NotificationDeliveryLogConfiguration : IEntityTypeConfiguration<NotificationDeliveryLog>
+{
+    public void Configure(EntityTypeBuilder<NotificationDeliveryLog> b)
+    {
+        // M1: APPEND-ONLY provider-send evidence (LEGAL #8, FR-27/FR-32). DB trigger
+        // TR_NotifDelivery_NoModify rejects UPDATE/DELETE — append a new row (same CorrelationId)
+        // to record status changes; a separate purge worker deletes rows past RetentionExpiresAtUtc
+        // (the purge runs with elevated rights / the trigger is bypassed for the retention sweep).
+        b.ToTable("NotificationDeliveryLog", t =>
+        {
+            t.HasCheckConstraint("CK_NotifDelivery_Channel", "[Channel] IN ('Email','Sms')");
+            t.HasCheckConstraint("CK_NotifDelivery_Status", "[Status] IN ('Queued','Sent','Failed','Retrying')");
+        });
+        b.HasKey(x => x.NotificationDeliveryLogId);
+        b.Property(x => x.NotificationDeliveryLogId).UseIdentityColumn();
+        b.Property(x => x.Provider).HasColumnType("varchar(40)").IsRequired();
+        b.Property(x => x.ProviderMessageId).HasColumnType("varchar(200)");
+        b.Property(x => x.Channel).HasConversion<string>().HasColumnType("varchar(20)").IsRequired();
+        b.Property(x => x.RecipientMasked).HasColumnType("varchar(120)").IsRequired();
+        b.Property(x => x.TemplateKey).HasColumnType("varchar(80)").IsRequired();
+        b.Property(x => x.TemplateVersion).HasColumnType("varchar(20)").IsRequired();
+        b.Property(x => x.Status).HasConversion<string>().HasColumnType("varchar(20)")
+            .HasDefaultValue(DeliveryStatus.Queued);
+        b.Property(x => x.ErrorDetail).HasMaxLength(1000);
+        b.Property(x => x.AttemptCount).HasDefaultValue(0);
+        b.Property(x => x.PayloadSnapshotJson).HasColumnType("nvarchar(max)");
+        b.Property(x => x.SentAtUtc).HasColumnType("datetime2(3)");
+        b.Property(x => x.CreatedAtUtc).HasColumnType("datetime2(3)").HasDefaultValueSql("SYSUTCDATETIME()");
+        b.Property(x => x.RetentionExpiresAtUtc).HasColumnType("datetime2(3)");
+        b.HasIndex(x => new { x.UserId, x.CreatedAtUtc }).HasDatabaseName("IX_NotifDelivery_User");
+        b.HasIndex(x => x.CorrelationId).HasFilter("[CorrelationId] IS NOT NULL").HasDatabaseName("IX_NotifDelivery_Correlation");
+        b.HasIndex(x => x.RetentionExpiresAtUtc).HasDatabaseName("IX_NotifDelivery_Retention");
+        b.HasOne(x => x.Notification).WithMany()
+            .HasForeignKey(x => x.NotificationId).HasConstraintName("FK_NotifDelivery_Notification").OnDelete(DeleteBehavior.NoAction);
+        b.HasOne(x => x.User).WithMany()
+            .HasForeignKey(x => x.UserId).HasConstraintName("FK_NotifDelivery_User").OnDelete(DeleteBehavior.NoAction);
+    }
+}
+
+public class DataSubjectRequestConfiguration : IEntityTypeConfiguration<DataSubjectRequest>
+{
+    public void Configure(EntityTypeBuilder<DataSubjectRequest> b)
+    {
+        // M3 (PDPA DSAR): export/erasure/access tracking with a statutory DueByUtc SLA.
+        // Mutable through the service only; every transition is mirrored to AuditLogs by the app layer.
+        b.ToTable("DataSubjectRequests", t =>
+        {
+            t.HasCheckConstraint("CK_Dsar_Type", "[RequestType] IN ('Export','Erasure','Access','Rectify','WithdrawConsent')");
+            t.HasCheckConstraint("CK_Dsar_Status", "[Status] IN ('Pending','InProgress','Completed','Rejected')");
+        });
+        b.HasKey(x => x.DataSubjectRequestId);
+        b.Property(x => x.DataSubjectRequestId).HasDefaultValueSql("NEWSEQUENTIALID()");
+        b.Property(x => x.RequestType).HasConversion<string>().HasColumnType("varchar(20)").IsRequired();
+        b.Property(x => x.Status).HasConversion<string>().HasColumnType("varchar(20)")
+            .HasDefaultValue(DataSubjectRequestStatus.Pending);
+        b.Property(x => x.VerifiedAtUtc).HasColumnType("datetime2(3)");
+        b.Property(x => x.ResultArtifactPath).HasMaxLength(400);
+        b.Property(x => x.DueByUtc).HasColumnType("datetime2(3)");
+        b.Property(x => x.Note).HasMaxLength(2000);
+        b.Property(x => x.CreatedAtUtc).HasColumnType("datetime2(3)").HasDefaultValueSql("SYSUTCDATETIME()");
+        b.Property(x => x.CompletedAtUtc).HasColumnType("datetime2(3)");
+        b.HasIndex(x => new { x.RequestedByUserId, x.CreatedAtUtc }).HasDatabaseName("IX_Dsar_Requester");
+        b.HasIndex(x => new { x.Status, x.DueByUtc }).HasDatabaseName("IX_Dsar_Status_Due");
+        b.HasOne(x => x.RequestedByUser).WithMany()
+            .HasForeignKey(x => x.RequestedByUserId).HasConstraintName("FK_Dsar_Requester").OnDelete(DeleteBehavior.NoAction);
+        b.HasOne(x => x.HandledByUser).WithMany()
+            .HasForeignKey(x => x.HandledByUserId).HasConstraintName("FK_Dsar_HandledBy").OnDelete(DeleteBehavior.NoAction);
+    }
+}
+
 public class ConfigVersionConfiguration : IEntityTypeConfiguration<ConfigVersion>
 {
     public void Configure(EntityTypeBuilder<ConfigVersion> b)
