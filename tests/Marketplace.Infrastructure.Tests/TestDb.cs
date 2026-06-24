@@ -86,6 +86,26 @@ internal static class TestDb
         services.AddSingleton(db);
         services.AddScoped<IAuditService>(_ => new AuditService(db));
         services.AddScoped<ICreditService>(_ => new CreditService(db, new AuditService(db)));
+        // M1: the real NotificationSender facade over the dev-fallback Log transports (no provider creds
+        // needed) so NotificationDispatchService can deliver Email/SMS notices in worker tests and the
+        // delivery-log evidence row is persisted exactly as in production.
+        var notifOptions = new Marketplace.Infrastructure.Services.Notifications.NotificationOptions();
+        services.AddScoped<Marketplace.Application.Notifications.IEmailSender>(
+            _ => new Marketplace.Infrastructure.Services.Notifications.LogEmailSender(
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                    Marketplace.Infrastructure.Services.Notifications.LogEmailSender>.Instance));
+        services.AddScoped<Marketplace.Application.Notifications.ISmsSender>(
+            _ => new Marketplace.Infrastructure.Services.Notifications.LogSmsSender(
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                    Marketplace.Infrastructure.Services.Notifications.LogSmsSender>.Instance));
+        services.AddScoped<Marketplace.Application.Notifications.INotificationSender>(sp =>
+            new Marketplace.Infrastructure.Services.Notifications.NotificationSender(
+                db,
+                sp.GetRequiredService<Marketplace.Application.Notifications.IEmailSender>(),
+                sp.GetRequiredService<Marketplace.Application.Notifications.ISmsSender>(),
+                notifOptions,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<
+                    Marketplace.Infrastructure.Services.Notifications.NotificationSender>.Instance));
         return services.BuildServiceProvider();
     }
 

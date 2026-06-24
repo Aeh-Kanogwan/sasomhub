@@ -56,7 +56,7 @@ public static class DependencyInjection
         // Phase A modules M1..M7 (Notifications/KYC/DSAR/Dispute/Blacklist/Appraisal/ConfigAdmin).
         // Registered via the single ModuleRegistration composition root so Api/Web/Worker share one
         // wiring and each backend-dev edits only their own AddMx method (see ModuleRegistration.cs).
-        services.AddModules();
+        services.AddModules(configuration);
 
         // TODO: register repositories / unit-of-work / remaining domain services here.
         return services;
