@@ -92,7 +92,9 @@ public static class ModuleRegistration
     // ---- M7: Config versioning admin edit ------------------------------------------------------
     private static IServiceCollection AddM7ConfigAdmin(this IServiceCollection services)
     {
-        services.AddScoped<IConfigAdminService, M7ConfigAdminServiceStub>();
+        // Real append-only config-version admin service (FR-31). Reuses the already-registered
+        // ConfigVersionResolver for "current effective value" reads; every Set APPENDs an immutable row.
+        services.AddScoped<IConfigAdminService, Services.Configuration.ConfigAdminService>();
         return services;
     }
 }

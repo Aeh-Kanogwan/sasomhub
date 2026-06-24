@@ -1,0 +1,47 @@
+@model Marketplace.Web.Models.AdminConfig.AdminConfigIndexViewModel
+@{
+    ViewData["Title"] = "ตั้งค่าระบบ / ราคา (Admin)";
+    var ok = TempData["AdminOk"] as string;
+    var err = TempData["AdminError"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">Admin / ตั้งค่าระบบ</div>
+  <h1>ตั้งค่าระบบและราคา</h1>
+</section>
+
+@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
+@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
+
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-info">
+    การแก้ไขเป็นแบบบันทึกประวัติ (append-only): ทุกการเปลี่ยนแปลงจะเพิ่มเวอร์ชันใหม่ที่มีผล
+    ตั้งแต่เวลาที่กำหนด ไม่กระทบราคาที่เก็บไว้กับรอบสมาชิกที่ชำระไปแล้ว
+  </div>
+</section>
+
+<section class="container">
+  @if (Model.Current.Count == 0)
+  {
+      <p>ยังไม่มีค่าคอนฟิกในระบบ</p>
+  }
+  else
+  {
+      <table class="table">
+        <thead>
+          <tr><th>คีย์ (ConfigKey)</th><th>ค่าปัจจุบัน</th><th>มีผลตั้งแต่ (UTC)</th><th></th></tr>
+        </thead>
+        <tbody>
+          @foreach (var c in Model.Current)
+          {
+              <tr>
+                <td><code>@c.ConfigKey</code></td>
+                <td>@c.Value</td>
+                <td>@c.EffectiveFromUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                <td><a asp-action="History" asp-route-key="@c.ConfigKey">ประวัติ / แก้ไข</a></td>
+              </tr>
+          }
+        </tbody>
+      </table>
+  }
+</section>

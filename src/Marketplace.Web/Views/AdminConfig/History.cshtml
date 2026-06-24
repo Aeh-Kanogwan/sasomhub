@@ -1,0 +1,69 @@
+@model Marketplace.Web.Models.AdminConfig.AdminConfigHistoryViewModel
+@{
+    ViewData["Title"] = "ประวัติคอนฟิก (Admin)";
+    var ok = TempData["AdminOk"] as string;
+    var err = TempData["AdminError"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">Admin / ตั้งค่าระบบ / ประวัติ</div>
+  <h1>ประวัติเวอร์ชัน: <code>@Model.ConfigKey</code></h1>
+</section>
+
+@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
+@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
+
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <h2>เพิ่มเวอร์ชันใหม่</h2>
+  <div class="alert alert-info">
+    การบันทึกจะเพิ่มเวอร์ชันใหม่ (ไม่แก้ของเดิม) และมีผลตั้งแต่เวลาที่กำหนดเป็นต้นไป
+    ห้ามตั้งเวลาที่มีผลซ้ำกับเวอร์ชันที่มีอยู่แล้ว
+  </div>
+  <form asp-action="Append" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="key" value="@Model.ConfigKey" />
+    <div class="form-group">
+      <label for="value">ค่าใหม่</label>
+      <input id="value" name="value" class="form-control" value="@Model.NewValue" required />
+    </div>
+    <div class="form-group">
+      <label for="effectiveFromUtc">มีผลตั้งแต่ (UTC)</label>
+      <input id="effectiveFromUtc" name="effectiveFromUtc" type="datetime-local" class="form-control"
+             value="@Model.NewEffectiveFromUtc.ToString("yyyy-MM-ddTHH:mm")" required />
+    </div>
+    <div class="form-group">
+      <label for="note">หมายเหตุ</label>
+      <input id="note" name="note" class="form-control" value="@Model.Note" />
+    </div>
+    <button type="submit" class="btn btn-primary">บันทึกเวอร์ชันใหม่</button>
+  </form>
+</section>
+
+<section class="container">
+  <h2>ประวัติทั้งหมด (ใหม่สุดก่อน)</h2>
+  @if (Model.History.Count == 0)
+  {
+      <p>ยังไม่มีเวอร์ชันสำหรับคีย์นี้</p>
+  }
+  else
+  {
+      <table class="table">
+        <thead>
+          <tr><th>ค่า</th><th>มีผลตั้งแต่ (UTC)</th><th>โดย</th><th>หมายเหตุ</th><th>บันทึกเมื่อ (UTC)</th></tr>
+        </thead>
+        <tbody>
+          @foreach (var v in Model.History)
+          {
+              <tr>
+                <td>@v.Value</td>
+                <td>@v.EffectiveFromUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@(v.CreatedByUserId?.ToString("N").Substring(0, 8) ?? "system/seed")</td>
+                <td>@(string.IsNullOrEmpty(v.Note) ? "—" : v.Note)</td>
+                <td>@v.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+              </tr>
+          }
+        </tbody>
+      </table>
+  }
+  <a asp-action="Index">กลับไปหน้าตั้งค่า</a>
+</section>
