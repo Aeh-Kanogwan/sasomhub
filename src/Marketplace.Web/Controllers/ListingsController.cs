@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Marketplace.Application.Credits;
+using Marketplace.Application.Reputation;
 using Marketplace.Domain.Entities;
 using Marketplace.Domain.Enums;
 using Marketplace.Infrastructure.Persistence;
@@ -27,17 +28,21 @@ public class ListingsController : Controller
 
     // FR-30 promotion debits credit via ICreditService.SpendAsync (idempotent + atomic, FR-33).
     private readonly ICreditService _creditService;
+    // FR-17 warn-on-deal: surface the seller's active CONFIRMED warnings (code/severity only) (M5).
+    private readonly IBlacklistService _blacklist;
     private readonly MarketplaceDbContext _db;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<ListingsController> _logger;
 
     public ListingsController(
         ICreditService creditService,
+        IBlacklistService blacklist,
         MarketplaceDbContext db,
         IWebHostEnvironment env,
         ILogger<ListingsController> logger)
     {
         _creditService = creditService;
+        _blacklist = blacklist;
         _db = db;
         _env = env;
         _logger = logger;
@@ -89,6 +94,27 @@ public class ListingsController : Controller
 
                 var isAuction = product.ListingType == ListingType.Auction && product.Auction is not null;
 
+                // FR-17 warn-on-deal: if the seller (counterparty) has active CONFIRMED warnings, surface a
+                // NEUTRAL banner to the viewer. Code/severity only (Legal #3) — never the internal note;
+                // we render only a generic caution + the standard reason label(s). Fail-soft: any error
+                // leaves the message null so the listing still loads.
+                string? warnOnDeal = null;
+                try
+                {
+                    var warnings = await _blacklist.GetActiveWarningsAsync(product.SellerId, ct);
+                    if (warnings.Succeeded && warnings.Value!.Count > 0)
+                    {
+                        var reasons = string.Join(", ", warnings.Value.Select(w => w.ReasonDisplayName).Distinct());
+                        warnOnDeal = $"โปรดใช้ความระมัดระวังในการทำธุรกรรมกับผู้ขายรายนี้ " +
+                                     $"(มีประวัติที่อยู่ระหว่างการติดตามภายในระบบ: {reasons}) " +
+                                     $"ระบบเป็นเพียงสื่อกลาง โปรดตรวจสอบก่อนตัดสินใจ";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Listings/Detail: warn-on-deal lookup failed for seller {SellerId}.", product.SellerId);
+                }
+
                 // FR-07/FR-08: surface real card specs (rarity/grade/serial/set). Grade is an appraiser
                 // opinion label, never a platform guarantee. Omit rows we have no value for.
                 var specs = new List<SpecRow>();
@@ -118,9 +144,9 @@ public class ListingsController : Controller
                         TrustScore = product.Seller?.TrustScore?.Score ?? 0,
                         CollectorLevel = null,
                         CompletedDeals = completedDeals
-                    }
-                    // WarnOnDealMessage (FR-17) intentionally left null here — the blacklist warn-on-deal
-                    // projection (viewer vs counterparty) is owned by the reputation/compliance agent.
+                    },
+                    // FR-17 (M5): neutral warn-on-deal banner — code/severity-derived label only, no free text.
+                    WarnOnDealMessage = warnOnDeal
                 };
             }
         }
