@@ -1,3 +1,4 @@
+using Marketplace.Application.Notifications;
 using Marketplace.Domain.Entities;
 using Marketplace.Domain.Enums;
 using Marketplace.Infrastructure.Persistence;
@@ -8,8 +9,9 @@ namespace Marketplace.Worker.Services;
 /// <summary>
 /// B-01/G-1, FR-27/FR-32: delivers Pending notifications (lifecycle advance-notices created by
 /// <see cref="MembershipTrialExpiryService"/>, plus auction-close notices created at auction close).
-/// Email is a STUB here (logged, not SMTP); in-app is delivered by simply marking the row Sent so the
-/// member's notification feed can read it. On delivery we set Status=Sent + SentAtUtc.
+/// Email/SMS are delivered through the real <see cref="INotificationSender"/> (M1) which calls the
+/// configured provider and persists a NotificationDeliveryLog row (LEGAL #8); in-app is delivered by
+/// simply marking the row Sent so the member's feed can read it. On delivery we set Status=Sent + SentAtUtc.
 ///
 /// Idempotency: we only pick rows whose Status = Pending and re-stamp them to Sent/Failed, so a re-run
 /// never re-delivers an already-Sent notice. Failures set Status=Failed (kept eligible for a future
@@ -50,20 +52,23 @@ public class NotificationDispatchService : BackgroundService
     {
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarketplaceDbContext>();
+        var sender = scope.ServiceProvider.GetRequiredService<INotificationSender>();
 
         var now = DateTime.UtcNow;
 
         // Due, not-yet-sent notices (uses IX_Notif_Due: filtered on Status='Pending').
+        // Include the recipient User so Email/SMS sends have an address/phone to deliver to.
         var due = await db.Notifications
             .Where(n => n.Status == NotificationStatus.Pending && n.ScheduledForUtc <= now)
             .OrderBy(n => n.ScheduledForUtc)
             .Take(BatchSize)
+            .Include(n => n.User)
             .ToListAsync(ct);
 
         var sent = 0;
         foreach (var notice in due)
         {
-            var ok = await DeliverAsync(notice, ct);
+            var ok = await DeliverAsync(sender, notice, ct);
             notice.Status = ok ? NotificationStatus.Sent : NotificationStatus.Failed;
             if (ok)
             {
@@ -82,28 +87,57 @@ public class NotificationDispatchService : BackgroundService
     }
 
     /// <summary>
-    /// Channel delivery. Email/SMS are stubbed (logged only — no SMTP/SMS provider wired in MVP); in-app is
-    /// a no-op success (the row itself IS the in-app message once Status=Sent). Returns true on success.
+    /// Channel delivery. Email/SMS go through the real provider via <see cref="INotificationSender"/>,
+    /// which persists a NotificationDeliveryLog row (LEGAL #8) on every attempt; in-app is a no-op
+    /// success (the row itself IS the in-app message once Status=Sent). Returns true on success.
     /// </summary>
-    private Task<bool> DeliverAsync(Notification notice, CancellationToken ct)
+    private async Task<bool> DeliverAsync(INotificationSender sender, Notification notice, CancellationToken ct)
     {
         switch (notice.Channel)
         {
             case NotificationChannel.Email:
-                _logger.LogInformation(
-                    "[EMAIL stub] notice {Id} type={Type} milestone={Milestone} -> user {User} (membership {Membership}).",
-                    notice.NotificationId, notice.Type, notice.Milestone, notice.UserId, notice.RelatedMembershipId);
-                return Task.FromResult(true);
-
             case NotificationChannel.Sms:
-                _logger.LogInformation("[SMS stub] notice {Id} type={Type} -> user {User}.",
-                    notice.NotificationId, notice.Type, notice.UserId);
-                return Task.FromResult(true);
+            {
+                var channel = notice.Channel == NotificationChannel.Email ? SendChannel.Email : SendChannel.Sms;
+                var recipient = notice.Channel == NotificationChannel.Email
+                    ? notice.User?.Email
+                    : notice.User?.PhoneNumber;
+
+                if (string.IsNullOrWhiteSpace(recipient))
+                {
+                    _logger.LogWarning("Notice {Id} ({Channel}) has no recipient address; marking failed.",
+                        notice.NotificationId, notice.Channel);
+                    return false;
+                }
+
+                // TemplateKey/Version derived from the notice type; variables drive the rendered text.
+                // The sender masks the recipient + writes the delivery-log evidence row.
+                var request = new SendMessageRequest(
+                    Channel: channel,
+                    Recipient: recipient,
+                    TemplateKey: $"notification.{notice.Type}",
+                    TemplateVersion: "1",
+                    Variables: new Dictionary<string, string>
+                    {
+                        ["type"] = notice.Type.ToString(),
+                        ["milestone"] = notice.Milestone?.ToString() ?? string.Empty,
+                        ["membershipId"] = notice.RelatedMembershipId?.ToString() ?? string.Empty,
+                    },
+                    UserId: notice.UserId,
+                    NotificationId: notice.NotificationId,
+                    CorrelationId: notice.NotificationId);
+
+                var result = await sender.SendAsync(request, ct);
+                if (!result.Succeeded)
+                    _logger.LogWarning("Notice {Id} ({Channel}) provider send failed: {Error}",
+                        notice.NotificationId, notice.Channel, result.Error);
+                return result.Succeeded;
+            }
 
             case NotificationChannel.InApp:
             default:
                 // In-app feed reads Sent notices directly; nothing external to call.
-                return Task.FromResult(true);
+                return true;
         }
     }
 }

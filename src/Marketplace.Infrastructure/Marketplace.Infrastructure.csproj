@@ -24,4 +24,9 @@
     <ProjectReference Include="..\Marketplace.Application\Marketplace.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Lets the test project exercise M1's internal NotificationSender / provider classes directly. -->
+    <InternalsVisibleTo Include="Marketplace.Infrastructure.Tests" />
+  </ItemGroup>
+
 </Project>
