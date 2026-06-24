@@ -1,0 +1,91 @@
+@model IReadOnlyList<Marketplace.Application.Catalog.AppraisalOpinionDto>
+@{
+    ViewData["Title"] = "ความเห็นผู้ประเมิน (Admin)";
+    var productId = (Guid)ViewData["ProductId"]!;
+    var ok = TempData["AdminOk"] as string;
+    var err = TempData["AdminError"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">Admin / ความเห็นผู้ประเมิน</div>
+  <h1>ความเห็นผู้ประเมินของสินค้า</h1>
+  <p class="muted">รหัสสินค้า: @productId.ToString("N").Substring(0, 8)</p>
+</section>
+
+@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
+@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
+
+<section class="container">
+  <div class="alert alert-warning">
+    LEGAL #2: แต่ละรายการเป็น "ความเห็น" ของผู้ประเมินเท่านั้น แพลตฟอร์มไม่รับประกันความแท้
+    ห้ามใช้ถ้อยคำ เช่น "รับประกัน" / "การันตี" / "ของแท้ 100%" / "guarantee" / "100% authentic"
+  </div>
+</section>
+
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <h2>เพิ่มความเห็นใหม่</h2>
+  <form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="productId" value="@productId" />
+    <div class="form-group">
+      <label>ชื่อผู้ประเมิน</label>
+      <input name="appraiserName" class="form-control" maxlength="120" required />
+    </div>
+    <div class="form-group">
+      <label>ความเห็น</label>
+      <textarea name="opinionText" class="form-control" rows="4" required></textarea>
+    </div>
+    <div class="form-check">
+      <label><input type="checkbox" name="publish" value="true" /> เผยแพร่ทันที (ไม่เลือก = บันทึกเป็นฉบับร่าง)</label>
+    </div>
+    <button type="submit" class="btn btn-primary">บันทึก</button>
+  </form>
+</section>
+
+<section class="container">
+  <h2>ความเห็นทั้งหมด</h2>
+  @if (Model.Count == 0)
+  {
+      <p>ยังไม่มีความเห็นสำหรับสินค้านี้</p>
+  }
+  else
+  {
+      <table class="table">
+        <thead>
+          <tr><th>ผู้ประเมิน</th><th>ความเห็น</th><th>Disclaimer</th><th>สถานะ</th><th>เมื่อ</th><th></th></tr>
+        </thead>
+        <tbody>
+          @foreach (var a in Model)
+          {
+              <tr>
+                <td>@a.AppraiserName</td>
+                <td>@a.OpinionText</td>
+                <td>@a.DisclaimerVersion</td>
+                <td>@(a.IsPublished ? "เผยแพร่" : "ฉบับร่าง")</td>
+                <td>@a.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                  @if (a.IsPublished)
+                  {
+                      <form asp-action="Unpublish" method="post" style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="appraisalOpinionId" value="@a.AppraisalOpinionId" />
+                        <input type="hidden" name="productId" value="@productId" />
+                        <button type="submit" class="btn btn-link">นำออก</button>
+                      </form>
+                  }
+                  else
+                  {
+                      <form asp-action="Publish" method="post" style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="appraisalOpinionId" value="@a.AppraisalOpinionId" />
+                        <input type="hidden" name="productId" value="@productId" />
+                        <button type="submit" class="btn btn-link">เผยแพร่</button>
+                      </form>
+                  }
+                </td>
+              </tr>
+          }
+        </tbody>
+      </table>
+  }
+</section>

@@ -78,14 +78,17 @@ public static class ModuleRegistration
     // ---- M5: Blacklist warn-on-deal + admin ban/unban ------------------------------------------
     private static IServiceCollection AddM5Blacklist(this IServiceCollection services)
     {
-        services.AddScoped<IBlacklistService, M5BlacklistServiceStub>();
+        services.AddScoped<IBlacklistService, Services.Reputation.BlacklistService>();
         return services;
     }
 
     // ---- M6: AppraisalOpinion create -----------------------------------------------------------
+    // FR-07 / LEGAL #2: real write service for dbo.AppraisalOpinions (opinion only, stamps the current
+    // disclaimer version, rejects warranty wording). Depends on ConfigVersionResolver (registered in
+    // DependencyInjection) + the scoped IAuditService.
     private static IServiceCollection AddM6Appraisal(this IServiceCollection services)
     {
-        services.AddScoped<IAppraisalService, M6AppraisalServiceStub>();
+        services.AddScoped<IAppraisalService, Services.Catalog.AppraisalService>();
         return services;
     }
 

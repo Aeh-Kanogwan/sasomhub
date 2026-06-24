@@ -35,4 +35,14 @@ public interface IAppraisalService
 
     /// <summary>Publish a previously-drafted opinion (separate review step before it shows publicly).</summary>
     Task<Result<AppraisalOpinionDto>> PublishAsync(Guid appraisalOpinionId, Guid actorUserId, CancellationToken ct = default);
+
+    /// <summary>Unpublish a previously-published opinion (pull it back into review / hide from the public list).</summary>
+    Task<Result<AppraisalOpinionDto>> UnpublishAsync(Guid appraisalOpinionId, Guid actorUserId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Opinions on a product. <paramref name="includeUnpublished"/>=false (default) returns only the
+    /// publicly-visible (published) opinions; the admin/appraiser surface passes true to see drafts too.
+    /// </summary>
+    Task<Result<IReadOnlyList<AppraisalOpinionDto>>> GetForProductAsync(
+        Guid productId, bool includeUnpublished = false, CancellationToken ct = default);
 }
