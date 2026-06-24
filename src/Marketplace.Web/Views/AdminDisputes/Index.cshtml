@@ -1,0 +1,54 @@
+@model Marketplace.Web.Models.Disputes.AdminDisputesViewModel
+@{
+    ViewData["Title"] = "จัดการข้อพิพาท (Admin)";
+    var ok = TempData["AdminOk"] as string;
+    var err = TempData["AdminError"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">Admin / ข้อพิพาท</div>
+  <h1>คิวข้อพิพาท</h1>
+</section>
+
+@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
+@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
+
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <form asp-action="Index" method="get">
+    สถานะ:
+    <select name="status" class="form-control" onchange="this.form.submit()">
+      <option value="Open" selected="@(Model.StatusFilter == "Open")">Open</option>
+      <option value="UnderReview" selected="@(Model.StatusFilter == "UnderReview")">UnderReview</option>
+      <option value="Escalated" selected="@(Model.StatusFilter == "Escalated")">Escalated</option>
+      <option value="Resolved" selected="@(Model.StatusFilter == "Resolved")">Resolved</option>
+      <option value="Rejected" selected="@(Model.StatusFilter == "Rejected")">Rejected</option>
+      <option value="" selected="@(Model.StatusFilter == null)">ทั้งหมด</option>
+    </select>
+  </form>
+</section>
+
+<section class="container">
+  @if (Model.Disputes.Count == 0)
+  {
+      <p>ไม่มีข้อพิพาทในสถานะนี้</p>
+  }
+  else
+  {
+      <table class="table">
+        <thead>
+          <tr><th>รหัสธุรกรรม</th><th>สถานะ</th><th>เปิดเมื่อ</th><th></th></tr>
+        </thead>
+        <tbody>
+          @foreach (var d in Model.Disputes)
+          {
+              <tr>
+                <td>@d.TransactionId.ToString("N").Substring(0, 8)</td>
+                <td>@d.Status</td>
+                <td>@d.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                <td><a asp-action="Detail" asp-route-id="@d.DisputeId">ตรวจสอบ</a></td>
+              </tr>
+          }
+        </tbody>
+      </table>
+  }
+</section>

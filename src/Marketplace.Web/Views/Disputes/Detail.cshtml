@@ -1,0 +1,37 @@
+@model Marketplace.Web.Models.Disputes.DisputeDetailViewModel
+@{
+    ViewData["Title"] = "รายละเอียดข้อพิพาท";
+    var d = Model.Dispute;
+    var result = TempData["DisputeResult"] as string;
+    var message = TempData["DisputeMessage"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / ข้อพิพาท / รายละเอียด</div>
+  <h1>รายละเอียดข้อพิพาท</h1>
+</section>
+
+@if (!string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(message))
+{
+    <section class="container" style="margin-bottom:var(--stack-md)">
+      <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
+        <div>@message</div>
+      </div>
+    </section>
+}
+
+<section class="container">
+  <dl>
+    <dt>รหัสข้อพิพาท</dt><dd>@d.DisputeId</dd>
+    <dt>รหัสธุรกรรม</dt><dd>@d.TransactionId</dd>
+    <dt>สถานะ</dt><dd>@d.Status</dd>
+    <dt>รายละเอียด</dt><dd>@(string.IsNullOrEmpty(d.Description) ? "—" : d.Description)</dd>
+    <dt>ผลการไกล่เกลี่ย</dt><dd>@(string.IsNullOrEmpty(d.Resolution) ? "ยังไม่มีผล" : d.Resolution)</dd>
+    <dt>เปิดเมื่อ</dt><dd>@d.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</dd>
+    @if (d.ResolvedAtUtc is not null)
+    {
+        <dt>ปิดเมื่อ</dt><dd>@d.ResolvedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</dd>
+    }
+  </dl>
+  <a asp-action="Index">กลับไปรายการข้อพิพาท</a>
+</section>

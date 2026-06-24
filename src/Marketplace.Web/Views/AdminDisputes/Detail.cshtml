@@ -1,0 +1,60 @@
+@model Marketplace.Web.Models.Disputes.AdminDisputeDetailViewModel
+@{
+    ViewData["Title"] = "ตรวจสอบข้อพิพาท (Admin)";
+    var d = Model.Dispute;
+    var ok = TempData["AdminOk"] as string;
+    var err = TempData["AdminError"] as string;
+    var isTerminal = d.Status is "Resolved" or "Rejected";
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">Admin / ข้อพิพาท / ตรวจสอบ</div>
+  <h1>ตรวจสอบข้อพิพาท</h1>
+</section>
+
+@if (!string.IsNullOrEmpty(ok)) { <div class="container"><div class="alert alert-info">@ok</div></div> }
+@if (!string.IsNullOrEmpty(err)) { <div class="container"><div class="alert alert-danger">@err</div></div> }
+
+<!-- FR-21 / LEGAL #1: การไกล่เกลี่ยเท่านั้น ไม่มีการจ่าย/คืนเงินผ่านระบบ -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-danger">การไกล่เกลี่ยเท่านั้น — ไม่มีการเคลื่อนย้ายเงินผ่านแพลตฟอร์ม</div>
+</section>
+
+<section class="container">
+  <dl>
+    <dt>รหัสข้อพิพาท</dt><dd>@d.DisputeId</dd>
+    <dt>รหัสธุรกรรม</dt><dd>@d.TransactionId</dd>
+    <dt>ผู้เปิด</dt><dd>@d.RaisedByUserId</dd>
+    <dt>สถานะ</dt><dd>@d.Status</dd>
+    <dt>รายละเอียด</dt><dd>@(string.IsNullOrEmpty(d.Description) ? "—" : d.Description)</dd>
+    <dt>ผลการไกล่เกลี่ย</dt><dd>@(string.IsNullOrEmpty(d.Resolution) ? "ยังไม่มีผล" : d.Resolution)</dd>
+  </dl>
+
+  @if (!isTerminal)
+  {
+      <form asp-action="Transition" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@d.DisputeId" />
+        <div class="form-group">
+          <label for="newStatus">เปลี่ยนสถานะเป็น</label>
+          <select id="newStatus" name="newStatus" class="form-control">
+            <option value="UnderReview">UnderReview</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Escalated">Escalated</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="resolution">บันทึกผล (จำเป็นเมื่อ Resolved/Rejected)</label>
+          <textarea id="resolution" name="resolution" class="form-control" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">อัปเดตสถานะ</button>
+      </form>
+  }
+  else
+  {
+      <p>ข้อพิพาทนี้ปิดแล้ว (@d.Status)</p>
+  }
+
+  <a asp-action="Index">กลับไปคิวข้อพิพาท</a>
+</section>

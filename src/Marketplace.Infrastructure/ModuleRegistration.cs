@@ -71,7 +71,7 @@ public static class ModuleRegistration
     // ---- M4: Dispute service + flow ------------------------------------------------------------
     private static IServiceCollection AddM4Disputes(this IServiceCollection services)
     {
-        services.AddScoped<IDisputeService, M4DisputeServiceStub>();
+        services.AddScoped<IDisputeService, Services.Disputes.DisputeService>();
         return services;
     }
 

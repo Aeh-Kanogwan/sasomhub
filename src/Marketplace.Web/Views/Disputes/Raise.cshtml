@@ -1,0 +1,51 @@
+@model Marketplace.Web.Models.Disputes.RaiseDisputeViewModel
+@{
+    ViewData["Title"] = "เปิดข้อพิพาท";
+    var result = TempData["DisputeResult"] as string;
+    var message = TempData["DisputeMessage"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / ข้อพิพาท / เปิดใหม่</div>
+  <h1>เปิดข้อพิพาท</h1>
+</section>
+
+<!-- FR-21 / LEGAL #1: mediation only — the platform never pays or refunds. -->
+<section class="container" style="margin-bottom:var(--stack-md)">
+  <div class="alert alert-danger">
+    <strong>การไกล่เกลี่ยเท่านั้น</strong> — แพลตฟอร์มทำหน้าที่เป็นคนกลางบันทึกและตรวจสอบข้อพิพาท ไม่มีการจ่ายหรือคืนเงินผ่านระบบ
+  </div>
+</section>
+
+@if (!string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(message))
+{
+    <section class="container" style="margin-bottom:var(--stack-md)">
+      <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
+        <div>@message</div>
+      </div>
+    </section>
+}
+
+<section class="container">
+  <form asp-action="Raise" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="TransactionId" />
+
+    <div class="form-group">
+      <label asp-for="ReasonCodeId">เหตุผล (รหัสมาตรฐาน)</label>
+      <select asp-for="ReasonCodeId" class="form-control">
+        @foreach (var rc in Model.ReasonCodes)
+        {
+            <option value="@rc.ReasonCodeId">@rc.DisplayName</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label asp-for="Description">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
+      <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">เปิดข้อพิพาท</button>
+  </form>
+</section>

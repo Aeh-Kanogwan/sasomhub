@@ -1,0 +1,46 @@
+@model Marketplace.Web.Models.Disputes.MyDisputesViewModel
+@{
+    ViewData["Title"] = "ข้อพิพาทของฉัน";
+    var result = TempData["DisputeResult"] as string;
+    var message = TempData["DisputeMessage"] as string;
+}
+
+<section class="container page-head">
+  <div class="breadcrumb">หน้าแรก / ข้อพิพาท</div>
+  <h1>ข้อพิพาทของฉัน</h1>
+</section>
+
+@if (!string.IsNullOrEmpty(result) && !string.IsNullOrEmpty(message))
+{
+    <section class="container" style="margin-bottom:var(--stack-md)">
+      <div class="alert @(result == "ok" ? "alert-info" : "alert-danger")" role="status">
+        <div>@message</div>
+      </div>
+    </section>
+}
+
+<section class="container">
+  @if (Model.Disputes.Count == 0)
+  {
+      <p>ยังไม่มีข้อพิพาท</p>
+  }
+  else
+  {
+      <table class="table">
+        <thead>
+          <tr><th>รหัสธุรกรรม</th><th>สถานะ</th><th>เปิดเมื่อ</th><th></th></tr>
+        </thead>
+        <tbody>
+          @foreach (var d in Model.Disputes)
+          {
+              <tr>
+                <td>@d.TransactionId.ToString("N").Substring(0, 8)</td>
+                <td>@d.Status</td>
+                <td>@d.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                <td><a asp-action="Detail" asp-route-id="@d.DisputeId">ดูรายละเอียด</a></td>
+              </tr>
+          }
+        </tbody>
+      </table>
+  }
+</section>
