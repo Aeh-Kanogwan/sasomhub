@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Neon Vault — one-command, idempotent, reproducible database deploy (Option A:
+  Sasom Hub — one-command, idempotent, reproducible database deploy (Option A:
   schema.sql is the source of truth).
 
 .DESCRIPTION
@@ -71,7 +71,7 @@ function Invoke-SqlCmd {
     if ($LASTEXITCODE -ne 0) { throw "sqlcmd failed (exit $LASTEXITCODE): $($ExtraArgs -join ' ')" }
 }
 
-Write-Host "==> Neon Vault deploy  server=$Server  db=$Database  prod=$($Prod.IsPresent)" -ForegroundColor Cyan
+Write-Host "==> Sasom Hub deploy  server=$Server  db=$Database  prod=$($Prod.IsPresent)" -ForegroundColor Cyan
 
 # ---- 0. (optional) drop ----------------------------------------------------
 if ($DropFirst) {

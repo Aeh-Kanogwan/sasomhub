@@ -1,6 +1,6 @@
 # E2E tests (Playwright)
 
-End-to-end browser tests for the Marketplace web app (`src/Marketplace.Web`, "Neon Vault").
+End-to-end browser tests for the Marketplace web app (`src/Marketplace.Web`, "Sasom Hub").
 Runs **headed by default** so you can watch the browser drive the app.
 
 ## Prerequisites

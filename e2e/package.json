@@ -2,7 +2,7 @@
   "name": "marketplace-e2e",
   "version": "1.0.0",
   "private": true,
-  "description": "Playwright end-to-end tests for the Marketplace (Neon Vault) web app",
+  "description": "Playwright end-to-end tests for the Marketplace (Sasom Hub) web app",
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",

@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Guest browsing', () => {
   test('home page loads with brand + nav', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/Neon Vault/);
+    await expect(page).toHaveTitle(/Sasom Hub/);
     await expect(page.getByRole('link', { name: 'สมาชิก', exact: true }).first()).toBeVisible();
     // Guest sees the login CTA.
     await expect(page.getByRole('link', { name: 'เข้าสู่ระบบ' }).first()).toBeVisible();

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright E2E config for the Marketplace web app (ASP.NET Core MVC, "Neon Vault").
+ * Playwright E2E config for the Marketplace web app (ASP.NET Core MVC, "Sasom Hub").
  *
  * - Runs HEADED by default (headless:false) so you SEE the browser drive the app,
  *   with slowMo so the steps are watchable. Override for CI with `CI=1`.

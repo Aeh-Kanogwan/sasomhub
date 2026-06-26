@@ -1,4 +1,4 @@
-// Neon Vault — site.js
+// Sasom Hub — site.js
 // Minimal progressive-enhancement scripts ported from the prototype. The ticker scroll is
 // pure CSS (@keyframes ticker-scroll); JS here only powers the auction countdown and small toggles.
 

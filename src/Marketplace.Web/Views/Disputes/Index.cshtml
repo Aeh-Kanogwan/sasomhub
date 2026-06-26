@@ -4,7 +4,7 @@
     var result = TempData["DisputeResult"] as string;
     var message = TempData["DisputeMessage"] as string;
 
-    // FR-21: map the dispute status string -> Neon Vault badge class + Thai label.
+    // FR-21: map the dispute status string -> Sasom Hub badge class + Thai label.
     (string cls, string label) StatusBadge(string status) => status switch
     {
         "Open" => ("badge-trial", "เปิดเรื่อง"),

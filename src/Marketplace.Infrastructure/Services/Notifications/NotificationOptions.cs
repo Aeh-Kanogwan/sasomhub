@@ -18,7 +18,7 @@ public sealed class NotificationOptions
 
     /// <summary>"From" identity for outbound email (used by SMTP + SendGrid).</summary>
     public string FromEmail { get; set; } = "no-reply@neonvault.local";
-    public string FromName { get; set; } = "Neon Vault";
+    public string FromName { get; set; } = "Sasom Hub";
 
     /// <summary>
     /// HMAC-SHA256 pepper for <c>RecipientHash</c> (PDPA: lets us match/dedupe a recipient without

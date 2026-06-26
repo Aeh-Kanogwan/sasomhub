@@ -1,7 +1,7 @@
-# Neon Vault — Prototype (Trading Card Marketplace)
+# Sasom Hub — Prototype (Trading Card Marketplace)
 
 Clickable HTML prototype (static, ไม่ต่อ API) ของ marketplace ขายการ์ดสะสม
-ออกแบบตาม design system **"Neon Vault"** (Dark-Mode Glassmorphism + นีออน) เพื่อกลุ่ม Gen Y/Z
+ออกแบบตาม design system **"Sasom Hub"** (Dark-Mode Glassmorphism + นีออน) เพื่อกลุ่ม Gen Y/Z
 
 > ⚠️ เป็น **static mockup** เพื่อสาธิต flow/หน้าตาเท่านั้น — ปุ่ม submit จะ redirect ข้ามหน้าเฉย ๆ ไม่มีการเรียก API จริง
 
